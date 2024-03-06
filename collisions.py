@@ -11,13 +11,13 @@ class Collisions:
             rects[check]: A rect(which is currently colliding with cursor)
 
     """
-    def deck_collide_check(rects, collision_checks, mouse_pos, cards):
+    def deck_collide_check(self, rects, collision_checks, mouse_pos, cards):
         i = 0
         while i < len(collision_checks):
             collision_checks[i] = rects[i].collidepoint(mouse_pos)
-            if collision_checks[i] == True: # If cursor colliding with player card
+            if collision_checks[i]: # If cursor colliding with player card
                 # return (collision on?, which card this is)
-                return [True, cards[i]] 
+                return [True, cards[i]]
             else: # Cursors isnt colliding with anything
                 return [False]
             i += 1

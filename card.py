@@ -15,7 +15,7 @@ class Card:
         Returns:
             card(string): A string(card image directory)
     """
-    def generate_card():
+    def generate_card(self):
         # Define the cards chances
         card_chances = [
             (cards[0], 0.4),  # Grasshopper - 40%
