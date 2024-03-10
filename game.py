@@ -44,10 +44,10 @@ class Game:
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4                   5               6              7                8                      9             10        11
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11
         # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color)
         self.player_cards = []
-        #                  0            1           2                   3                            4                   5               6                   7              8                   9           10          11
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11
         # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color)
         self.pc_cards = []
 
@@ -189,18 +189,37 @@ class Game:
                 self.pc_collission_checks = list(map(list, zip(*self.pc_cards)))[6] # list of each collision check (bool) in pc cards
 
                 # Goes through each collission check in the list (player cards) and if colliding with cursor then sets them accordingly
-                self.p_colliding_with_card = collisions.Collisions.deck_collide_check(self, self.p_rects, self.p_collission_checks, self.pos, self.player_cards) # Player
-                self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos, self.pc_cards) # PC
-                # If colliding with player card, and not curretnyl playing animation play animation Hover (using card rect as parameter)
-                # print(self.p_colliding_with_card[0])
-                # print(self.p_colliding_with_card[1][9])
-                # print(self.p_colliding_with_card[1])
-                if self.p_colliding_with_card[0] and self.p_colliding_with_card[1][9] == False:
-                    animations.Animations.card_hover(self, self.p_colliding_with_card[1])
-                # If colliding with pc card, and not curretnyl playing animation play animation Hover (using card rect as parameter)   
-                if self.pc_colliding_with_card[0] and self.pc_colliding_with_card[1][9] == False:
-                    animations.Animations.card_hover(self, self.pc_colliding_with_card[1])
+                self.p_colliding_with_card = collisions.Collisions.deck_collide_check(self, self.p_rects, self.p_collission_checks, self.pos) # Player
+                self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos) # PC
+                # checks each card; If colliding with player card, and not curretnyl playing animation play animation Hover (using card rect as parameter)
+                i = 0
+                while i < len(self.p_colliding_with_card):
+                    # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
+                    if self.p_colliding_with_card[i] and self.player_cards[i][9] == False:
+                        self.player_cards[i][9] = True
+                        animations.Animations.card_hover(self, self.player_cards[i])
+                    # If not colliding with anything
+                    elif self.p_colliding_with_card[i] == False:
+                        self.player_cards[i][9] = False
+                        # If current position of card is not the same as the starting position of the card, then move back to starting position
+                        if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y]:
+                            animations.Animations.move_to_starting_pos(self, self.player_cards[i])
+                    i += 1
+                # Check each pc card, if currently colliding with cursor then sets them accordingly
+                i = 0
+                while i < len(self.pc_colliding_with_card):
+                    # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
+                    if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
+                        self.pc_cards[i][9] = True
+                        # ! TODO: ANIMATE SLIGHT GREYING OF CARD EFFECT
+                    # If not colliding with anything
+                    elif self.pc_colliding_with_card[i] == False:
+                        self.pc_cards[i][9] = False
+                        # If current position of card is not the same as the starting position of the card, then move back to starting position
+                        # ! TODO: TURN BACK TO ORIGINAL COLOR
+                    i += 1
                 self.collisions_checked = True
+           
             # START
             # SCREEN MANAGEMENT
             if(self.start_screen_active):
@@ -241,30 +260,34 @@ class Game:
                     # Cards have already been generated and collisiosn have been checked earlier
                     if self.generated_cards and self.collisions_checked:
                         # PLAYER
-
-                        # Cursor colliding with player card 
-                        if self.p_colliding_with_card[0] == True: # Tuple[bool, rect]
-                            # No card selected yet, Select card and place on board
-                            if self.card_selected == False:
-                                break
-                            # Card already selected, 'No.' animation plays
-                            else:
-                                break
-                        # PC
-                            
-                        # Cursor colliding with PC card
-                        elif self.pc_colliding_with_card[0] == True: # Tuple[bool, rect]
-                            # Player has selected a card and placed it on the board to fight
-                            if self.card_selected: # replace with player_cards[8?]
-                                # If card is already revealed [7], then you can battle it
-                                if self.pc_cards[7]:
+                        i = 0
+                        while i < len(self.player_cards):
+                            # Cursor colliding with player card 
+                            if self.p_colliding_with_card: # Tuple[bool, rect]
+                                # No card selected yet, Select card and place on board
+                                if self.card_selected == False:
                                     break
-                                # Card is not yet revealed [7], can't battle it
+                                # Card already selected, 'No.' animation plays
                                 else:
                                     break
+                            i += 1
+                        i = 0
+                        while i < len(self.pc_cards):    
+                            # Cursor colliding with PC card
+                            if self.pc_colliding_with_card: # Tuple[bool, rect]
+                                # Player has selected a card and placed it on the board to fight
+                                if self.card_selected: # replace with player_cards[8?]
+                                    # If card is already revealed [7], then you can battle it
+                                    if self.pc_cards[7]:
+                                        break
+                                    # Card is not yet revealed [7], can't battle it
+                                    else:
+                                        break
 
-                            else:
-                                break
+                                else:
+                                    break
+                            i += 1
+                
                 # KEYDOWN events
                 if event.type == pygame.KEYDOWN:
                     # Quit game with escape key

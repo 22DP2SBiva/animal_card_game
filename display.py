@@ -31,8 +31,7 @@ class Display:
             # Show collision objects and when cursor over them, turn red
             
             # PLAYER CARD COLLISION
-            print(self.p_colliding_with_card)
-            if self.p_colliding_with_card[0]:
+            if self.p_colliding_with_card[i]:
                 color = RED
                 rect_to_draw = self.player_cards[i][5]
                 self.player_cards[i][10] = color #Color rect red if colliding with player card
@@ -40,7 +39,6 @@ class Display:
             else:
                 color = BLUE
                 rect_to_draw = self.player_cards[i][5]
-                print(self.player_cards[i][5])
                 self.player_cards[i][10] = color #Color rect blue if not colliding with player card
 
             
@@ -54,16 +52,14 @@ class Display:
             # Show collision objects and when cursor over them, turn red
             
             # PC CARD COLLISION
-            if self.pc_colliding_with_card[0]:
+            if self.pc_colliding_with_card[i]:
                 color = RED
-                print(self.pc_cards[i][10])
                 self.pc_cards[i][10] = color #Color rect red if colliding with player card
                 rect_to_draw = self.pc_cards[i][5]
             else:
                 color = BLUE
                 self.pc_cards[i][10] = color #Color rect blue if not colliding with player card
                 rect_to_draw = self.pc_cards[i][5]
-                print(self.pc_cards[i][5])
             # Draw the rect
             debug_rect = rect_to_draw
             self.debug_rects.append([self.screen, color, debug_rect])
@@ -71,6 +67,5 @@ class Display:
         i = 0
         # Draw debug rects to screen
         while i < len(self.debug_rects):
-            print(self.debug_rects[i][0])
             pygame.draw.rect(self.debug_rects[i][0],self.debug_rects[i][1],self.debug_rects[i][2])
             i += 1
