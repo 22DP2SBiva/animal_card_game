@@ -14,7 +14,7 @@ BLUE = (0, 255, 0)
 running = True # for checking if game should be running
 # Objects that should be displayed on the screen
 class Game:
-    objects_to_display = [] # image(surface), position(tuple)
+    objects_to_display = [] # image(surface), position(list)
     def __init__(self):
         pygame.init()
         pygame.font.init()
@@ -26,6 +26,14 @@ class Game:
 
         self.clock = pygame.time.Clock()
 
+        # Events (mostly for animations)
+        self.hover_event = pygame.USEREVENT + 1
+        self.move_to_starting_pos_event = pygame.USEREVENT + 2
+
+        # Animation handling variables
+        self.animated_count = 0
+
+
         # Booleans to track current screen state
         self.start_screen_active = True
         self.play_screen_active = False
@@ -33,6 +41,7 @@ class Game:
         self.lose_screen_active = False
         self.loading = False
 
+        self.displaying = False
         self.first_round = True
         self.collisions_checked = False
         self.generated_cards = False
@@ -167,6 +176,7 @@ class Game:
     def run(self):
         global running
         while running:
+            self.displaying = False # For checking when a new frame was just made
             # ! Make this check EVERY card, not just one and use that for every other list card
             self.pos = pygame.mouse.get_pos() # Cursor position
             # COLLISION
@@ -197,12 +207,16 @@ class Game:
                     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
                     if self.p_colliding_with_card[i] and self.player_cards[i][9] == False:
                         self.player_cards[i][9] = True
+                        # Call this event every 100 milliseconds
+                        pygame.time.set_timer(self.hover_event, 100)
                         animations.Animations.card_hover(self, self.player_cards[i])
                     # If not colliding with anything
                     elif self.p_colliding_with_card[i] == False:
                         self.player_cards[i][9] = False
                         # If current position of card is not the same as the starting position of the card, then move back to starting position
                         if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y]:
+                            # Call this event every 100 milliseconds
+                            pygame.time.set_timer(self.move_to_starting_pos_event, 100)
                             animations.Animations.move_to_starting_pos(self, self.player_cards[i])
                     i += 1
                 # Check each pc card, if currently colliding with cursor then sets them accordingly
@@ -248,7 +262,28 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
+                # Animations
+                # if card hovering called and still should be animating this card
+                # ! ERROR: THIS SORT OF WORKS BUT NOT REALLY
+                if event.type == self.hover_event:
+                    if self.animated_count == 20:
+                        # Disable event
+                        pygame.event.set_blocked(self.hover_event)
+                        self.animated_count = 0
+                        print("Gets here")
+                    else:
+                        print("Moved "+ str(self.animated_count)+ " times")
+                        self.animated_count += 1
+                # if card hovering called and still should be animating this card
+                if event.type == self.move_to_starting_pos_event:
+                    if self.animated_count == 20:
+                        # Disable event
+                        pygame.event.set_blocked(self.move_to_starting_pos_event)
+                        self.animated_count = 0
+                        print("Gets here")
+                    else:
+                        print("Moved "+ str(self.animated_count)+ " times")
+                        self.animated_count += 1
                 # Mouse down
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     # Cursor colliding with start button
@@ -305,6 +340,7 @@ class Game:
                 self.screen.fill(BLACK)
                 self.screen.blit(self.loading_text, (870,500))
 
+            self.displaying = True # Set True, because we are about to display a new frame
             # UPDATE SCREEN
             pygame.display.update()
             self.clock.tick(60)
