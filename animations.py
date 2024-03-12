@@ -10,17 +10,19 @@ class Animations:
             rect(rect): A rect that's linked to the card
     """
     def card_hover(self, card):
-        # Moves the card slightly up in 5 int increments to simulate a hover effect 
-
+        # Moves the card slightly up in 5 int increments to simulate a hover effect
         old_rect = [card[5].x, card[5].y] # create a new rect that points to the old card rect
         # Move card slightly up
         card[5].y += 1 # move card up slightly]
         new_rect = [card[5].x, card[5].y]
+        print(old_rect)
+        print(new_rect)
         # Find and replace old_pos in objects we want to display with the new position
         # change positions of objects on screen
         # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
         display.Display.modify_objects_to_display(self, old_rect, new_rect)
     def move_to_starting_pos(self, card):
+        print("entered method")
         # Moves card back to the starting position
         # Checks if card current position X is the same as the starting position X
         old_rect = [card[5].x, card[5].y] # create a new rect that points to the old card rect
