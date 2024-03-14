@@ -63,11 +63,11 @@ class Game:
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11             
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color)
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count)
         self.player_cards = []
-        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color)
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count)
         self.pc_cards = []
 
         # Tuples
@@ -116,13 +116,16 @@ class Game:
             self.player_sub_list.append(False) # always at start
             # Revealed bool (used for checking if player can currently see waht card it is)
             self.player_sub_list.append(False)
-            
             # add position for further refrencing
             self.player_sub_list.append([400+x,600])
             # animation: is the card curretnly being animated?
             self.player_sub_list.append(False)
             # Color for debug mode
             self.player_sub_list.append(WHITE)
+             # Currently activate event for this card
+            self.player_sub_list.append(None)
+            # Animation frames played in total
+            self.player_sub_list.append(0)
 
             # Store objects which need to be displayed to the screen
             self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8]])
@@ -152,6 +155,10 @@ class Game:
             self.pc_sub_list.append(False)
             # Color for debug mode
             self.pc_sub_list.append(WHITE)
+            # Currently activate event for this card
+            self.pc_sub_list.append(None)
+            # Animation frames played in total
+            self.pc_sub_list.append(0)
             
             # Store objects which need to be displayed to the screen
             self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8]])
@@ -211,31 +218,38 @@ class Game:
                 # Goes through each collission check in the list (player cards) and if colliding with cursor then sets them accordingly
                 self.p_colliding_with_card = collisions.Collisions.deck_collide_check(self, self.p_rects, self.p_collission_checks, self.pos) # Player
                 self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos) # PC
+                i = 0
+                while i < len(self.p_colliding_with_card):
+                    self.player_cards[i][6] = self.p_colliding_with_card[i] # Set colliding bool
+                    i += 1
                 # checks each card; If colliding with player card, and not curretnyl playing animation play animation Hover (using card rect as parameter)
                 i = 0
                 while i < len(self.p_colliding_with_card):
                     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
                     if self.p_colliding_with_card[i] and self.player_cards[i][9] == False:
-                        self.player_cards[i][9] = True
-                        # If event blocked, then re-activate it
-                        if (pygame.event.get_blocked(self.hover_e)):
-                            pygame.event.set_allowed(self.hover_e)
+                        print("YES"+ str(self.player_cards[i]), " is colliding with cursor")
+                        self.player_cards[i][9] = True # animation check
+                        self.player_cards[i][6] = True # collision check
                         pygame.event.post(self.hover_event)
+                        new_event = self.hover_event
+                        # Set the newly posted event as the cards' controlling event
+                        self.player_cards[i][11] = new_event
                         
                         # Set card to access in animations function (used later) as  the current card being collided with
                         self.card_to_collide = self.player_cards[i]
                         
                     # If not colliding with anything
                     elif self.p_colliding_with_card[i] == False:
-                        self.player_cards[i][9] = False
+                        self.player_cards[i][9] = False # animaton check
+                        self.player_cards[i][6] = False # collision check
                         # If current position of card is not the same as the starting position of the card, then move back to starting position
                         if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y]:
+                            print(str(self.player_cards[i]) + "should move back to starting position")
                             self.colliding = False
-                            print("Shuld move card back to starting position")
-                            # If event blocked, then re-activate it
-                            if (pygame.event.get_blocked(self.move_to_starting_pos_e)):
-                                pygame.event.set_allowed(self.move_to_starting_pos_e)
                             pygame.event.post(self.move_to_starting_pos_event)
+                            new_event = self.move_to_starting_pos_event
+                            # Set the newly posted event as the cards' controlling event
+                            self.player_cards[i][11] = new_event
                             
                     i += 1
                 # Check each pc card, if currently colliding with cursor then sets them accordingly
@@ -275,20 +289,21 @@ class Game:
             # DISPLAY DEBUG MODE OBJECTS
             if self.debug_mode:
                 display.Display.debug_draw_rects(self)
-            # Check if any cards in list are being collided with
-            for cardd in self.p_colliding_with_card:
-                if cardd == True: # if card is colliding with cursor
-                    self.colliding = True
-            # if generated cards
-            if self.generated_cards and self.card_to_collide != None and self.animated_count != HOVER_RUN_COUNT:
-                if self.colliding == False and self.animated_count < HOVER_RUN_COUNT:
-                    pygame.event.post(self.move_to_starting_pos_event)
-                elif self.colliding == True and self.animated_count < HOVER_RUN_COUNT:
-                    # Is the mouse being held down?
-                    if self.pressing == False: # we are checking if there arent any animations already started, in which case animation count would be more than 0
-                        pygame.event.post(self.hover_event)
-                    elif self.pressing == True:
-                        pygame.event.post(self.select_event)
+            # Collision and animation checks (if generated cards)
+            if self.generated_cards and self.card_to_collide is not None:
+                for cardd in self.player_cards:
+                    if cardd[6] is False and cardd[12] < HOVER_RUN_COUNT:
+                        # [11] is the current event, we are assigning the new event to it
+                        pygame.event.post(self.move_to_starting_pos_event)
+                        cardd[11] = self.move_to_starting_pos_event
+                    elif cardd[6] is True and cardd[12] < HOVER_RUN_COUNT:
+                        # Is the mouse being held down?
+                        if self.pressing is False: # we are checking if there arent any animations already started, in which case animation count would be more than 0
+                            pygame.event.post(self.hover_event)
+                            cardd[11] = self.hover_event
+                        elif self.pressing is True:
+                            pygame.event.post(self.select_event)
+                            cardd[11] = self.select_event
             
             # EVENTS
             for event in pygame.event.get():
@@ -300,29 +315,41 @@ class Game:
                 # Animations
                 # if card hovering called and still should be animating this card, also if currently colliding with something
                 if event.type == self.hover_e:
-                    if self.animated_count == HOVER_RUN_COUNT:
-                        # Disable event
-                        self.animated_count = 0
-                    else:
-                        animations.Animations.card_hover(self, self.card_to_collide)
-                        self.animated_count += 1
+                    for cardd in self.player_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.hover_event:
+                            print("Hover", True, cardd)
+                            # [12] is the total amount of animation frames that the animation has done
+                            if cardd[12] == HOVER_RUN_COUNT:
+                                # Disable event
+                                cardd[12] = 0
+                            else:
+                                animations.Animations.card_hover(self, cardd)
+                                cardd[12] += 1
                 # if card hovering called and still should be animating this card
                 if event.type == self.move_to_starting_pos_e:
-                    if self.animated_count == HOVER_RUN_COUNT:
-                        # Disable event
-                        self.animated_count = 0
-                    else:
-                        animations.Animations.move_to_starting_pos(self, self.card_to_collide)
-                        self.animated_count += 1
+                    for cardd in self.player_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.move_to_starting_pos_event:
+                            print("Move back", True, cardd)
+                            if cardd[12] == HOVER_RUN_COUNT:
+                                # Disable event
+                                cardd[12] = 0
+                            else:
+                                animations.Animations.move_to_starting_pos(self, cardd)
+                                cardd[12] += 1
                 if event.type == self.select_e:
-                    if self.animated_count == HOVER_RUN_COUNT:
-                        # Disable event
-                        self.animated_count = 0
-                    else:
-                        animations.Animations.card_select(self, self.card_to_collide)
-                        self.animated_count += 1
+                    for cardd in self.player_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.select_event:
+                            if cardd[12] == HOVER_RUN_COUNT:
+                                # Disable event
+                                cardd[12] = 0
+                            else:
+                                animations.Animations.card_select(self, cardd)
+                                cardd[12] += 1
                 if event.type == self.cant_select_e:
-                    animations.Animations.card_cant_select(self, self.card_to_collide)
+                    animations.Animations.card_cant_select(self, cardd)
                 # Mouse down
                 if event.type == pygame.MOUSEBUTTONDOWN: 
                     self.pressing = True
