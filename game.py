@@ -11,7 +11,9 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 255, 0)
-HOVER_RUN_COUNT = 15
+HOVER_RUN_COUNT = 5
+SELECT_POSITION_X = 200
+SELECT_POSITION_Y = 400
 running = True # for checking if game should be running
 # Objects that should be displayed on the screen
 class Game:
@@ -19,7 +21,6 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.font.init()
-
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Animal card game")
 
@@ -41,6 +42,7 @@ class Game:
         # Animation handling variables
         self.animated_count = 0
         self.colliding = False # is the cursor colliding with a card?
+        self.run_count = 10 # how many frames the animation should run for
 
 
         # Booleans to track current screen state
@@ -58,16 +60,21 @@ class Game:
         self.debug_mode = False # For debugging (shows all rects)
         self.card_to_collide = None
         self.card_selected = False # If a card is currently selected to fight, then True
+        self.card_selected_rect = None # Currently selected card's rect
         self.pressing = False # Mouse left button
+        self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
+        self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
+        self.first_card_to_combine = [] # First card to combine
+        self.second_card_to_combine = [] # Second card to combine
 
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count)
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled)
         self.player_cards = []
-        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count)
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled)
         self.pc_cards = []
 
         # Tuples
@@ -126,6 +133,8 @@ class Game:
             self.player_sub_list.append(None)
             # Animation frames played in total
             self.player_sub_list.append(0)
+            # Can the card move back?
+            self.player_sub_list.append(False)
 
             # Store objects which need to be displayed to the screen
             self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8]])
@@ -159,6 +168,8 @@ class Game:
             self.pc_sub_list.append(None)
             # Animation frames played in total
             self.pc_sub_list.append(0)
+            # Can the card move back?
+            self.pc_sub_list.append(False)
             
             # Store objects which need to be displayed to the screen
             self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8]])
@@ -226,46 +237,48 @@ class Game:
                 i = 0
                 while i < len(self.p_colliding_with_card):
                     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
-                    if self.p_colliding_with_card[i] and self.player_cards[i][9] == False:
-                        print("YES"+ str(self.player_cards[i]), " is colliding with cursor")
+                    if self.p_colliding_with_card[i] and self.player_cards[i][9] is False:
                         self.player_cards[i][9] = True # animation check
                         self.player_cards[i][6] = True # collision check
-                        pygame.event.post(self.hover_event)
-                        new_event = self.hover_event
-                        # Set the newly posted event as the cards' controlling event
-                        self.player_cards[i][11] = new_event
-                        
+                        # if no currently selected card, then animate
+                        if self.card_selected is False:
+                            pygame.event.post(self.hover_event)
+                            new_event = self.hover_event
+                            # Set the newly posted event as the cards' controlling event
+                            self.player_cards[i][11] = new_event
                         # Set card to access in animations function (used later) as  the current card being collided with
                         self.card_to_collide = self.player_cards[i]
                         
-                    # If not colliding with anything
-                    elif self.p_colliding_with_card[i] == False:
+                    # If not colliding with anything (and selected rect is not this card rect)
+                    elif self.p_colliding_with_card[i] is False and self.card_selected_rect != self.player_cards[i][5]:
                         self.player_cards[i][9] = False # animaton check
                         self.player_cards[i][6] = False # collision check
-                        # If current position of card is not the same as the starting position of the card, then move back to starting position
-                        if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y]:
-                            print(str(self.player_cards[i]) + "should move back to starting position")
+                        # If there is no card selected, then move it back to starting position
+                        if self.card_selected is False:
+                            # If current position of card is not the same as the starting position of the card, then move back to starting position
+                            if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y] and self.player_cards[i][13] is False:
+                                self.colliding = False
+                                pygame.event.post(self.move_to_starting_pos_event)
+                                new_event = self.move_to_starting_pos_event
+                                # Set the newly posted event as the cards' controlling event
+                                self.player_cards[i][11] = new_event     
+                        else:   
                             self.colliding = False
-                            pygame.event.post(self.move_to_starting_pos_event)
-                            new_event = self.move_to_starting_pos_event
-                            # Set the newly posted event as the cards' controlling event
-                            self.player_cards[i][11] = new_event
-                            
                     i += 1
                 # Check each pc card, if currently colliding with cursor then sets them accordingly
-                i = 0
-                while i < len(self.pc_colliding_with_card):
-                    # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
-                    if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
-                        self.pc_cards[i][9] = True
-                        # ! TODO: ANIMATE SLIGHT GREYING OF CARD EFFECT
-                    # If not colliding with anything
-                    elif self.pc_colliding_with_card[i] == False:
-                        self.pc_cards[i][9] = False
-                        # If current position of card is not the same as the starting position of the card, then move back to starting position
-                        # ! TODO: TURN BACK TO ORIGINAL COLOR
-                    i += 1
-                self.collisions_checked = True
+                # i = 0
+                # while i < len(self.pc_colliding_with_card):
+                #     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
+                #     if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
+                #         self.pc_cards[i][9] = True
+                #         # ! TODO: ANIMATE SLIGHT GREYING OF CARD EFFECT
+                #     # If not colliding with anything
+                #     elif self.pc_colliding_with_card[i] == False:
+                #         self.pc_cards[i][9] = False
+                #         # If current position of card is not the same as the starting position of the card, then move back to starting position
+                #         # ! TODO: TURN BACK TO ORIGINAL COLOR
+                #     i += 1
+                # self.collisions_checked = True
            
             # START
             # SCREEN MANAGEMENT
@@ -292,18 +305,65 @@ class Game:
             # Collision and animation checks (if generated cards)
             if self.generated_cards and self.card_to_collide is not None:
                 for cardd in self.player_cards:
-                    if cardd[6] is False and cardd[12] < HOVER_RUN_COUNT:
+                    # Selecting card when it is hovered over
+                    if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False:
+                        if self.pressing:
+                            print("Selected 1")
+                            cardd[12] = 0
+                            cardd[13] = True
+                            # Set that a card is currently selected and which card is currently selected
+                            self.card_selected = True
+                            self.card_selected_rect = cardd[5]
+
+                            pygame.event.post(self.select_event)
+                            cardd[11] = self.select_event
+                    # Move selected card when it is NOT hovered over
+                    elif cardd[6] is True and cardd[12] != self.run_count and self.card_selected is True:
+                        if cardd[5] == self.card_selected_rect:
+                            print("Selected 1.2")
+                            cardd[12] = 0
+                            cardd[13] = True
+                            # Set that a card is currently selected and which card is currently selected
+                            self.card_selected = True
+                            self.card_selected_rect = cardd[5]
+
+                            pygame.event.post(self.select_event)
+                            cardd[11] = self.select_event
+                    # Hovering over card and not completed animation
+                    elif cardd[6] is True and cardd[12] < self.run_count:
+                        # Is the mouse being held down?
+                        # we are checking if the mouse left click is being pressed and if the currently selected card is not the same as the card being hovered over
+                        if self.pressing and self.card_selected is False or self.card_selected and self.card_selected is False:
+                            print("Selected 2")
+                            cardd[12] = 0
+                            cardd[13] = True
+                            # Set that a card is currently selected and which card is currently selected
+                            self.card_selected = True
+                            self.card_selected_rect = cardd[5]
+                            pygame.event.post(self.select_event)
+                            cardd[11] = self.select_event
+                        elif self.pressing is False and self.card_selected is False:
+                            print("Hover")
+                            self.run_count = HOVER_RUN_COUNT
+                            pygame.event.post(self.hover_event)
+                            cardd[11] = self.hover_event
+                    # If the card is not colliding with anything and the card selected is not the same as the current indexed card rect, then move card back to starting position
+                    elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False:
+                        print("Move back to starting position")
                         # [11] is the current event, we are assigning the new event to it
                         pygame.event.post(self.move_to_starting_pos_event)
                         cardd[11] = self.move_to_starting_pos_event
-                    elif cardd[6] is True and cardd[12] < HOVER_RUN_COUNT:
-                        # Is the mouse being held down?
-                        if self.pressing is False: # we are checking if there arent any animations already started, in which case animation count would be more than 0
-                            pygame.event.post(self.hover_event)
-                            cardd[11] = self.hover_event
-                        elif self.pressing is True:
-                            pygame.event.post(self.select_event)
-                            cardd[11] = self.select_event
+                    # If cursor not collidng with anything but a card has already been selected (and this card is the selcted card)
+                    elif cardd[6] is False and cardd[12] < self.run_count and cardd[5] == self.card_selected_rect:
+                        print("Selected 3")
+                        cardd[12] = 0
+                        cardd[13] = True
+                        # Set that a card is currently selected and which card is currently selected
+                        self.card_selected = True
+                        self.card_selected_rect = cardd[5]
+
+                        pygame.event.post(self.select_event)
+                        cardd[11] = self.select_event
             
             # EVENTS
             for event in pygame.event.get():
@@ -314,13 +374,12 @@ class Game:
                 
                 # Animations
                 # if card hovering called and still should be animating this card, also if currently colliding with something
-                if event.type == self.hover_e:
+                if event.type == self.hover_e and self.selected_card_count != 2:
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.hover_event:
-                            print("Hover", True, cardd)
                             # [12] is the total amount of animation frames that the animation has done
-                            if cardd[12] == HOVER_RUN_COUNT:
+                            if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
                             else:
@@ -331,64 +390,86 @@ class Game:
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_starting_pos_event:
-                            print("Move back", True, cardd)
-                            if cardd[12] == HOVER_RUN_COUNT:
+                            if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
                             else:
                                 animations.Animations.move_to_starting_pos(self, cardd)
                                 cardd[12] += 1
-                if event.type == self.select_e:
+                # Select a card
+                if event.type == self.select_e and self.card_selected is True:
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.select_event:
-                            if cardd[12] == HOVER_RUN_COUNT:
+                            # if card is at the middle of the screen, stop animation
+                            if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
+                                self.card_selected = False
                                 # Disable event
                                 cardd[12] = 0
                             else:
+                                cardd[12] = 1
+                                self.card_selected = True
                                 animations.Animations.card_select(self, cardd)
-                                cardd[12] += 1
                 if event.type == self.cant_select_e:
-                    animations.Animations.card_cant_select(self, cardd)
-                # Mouse down
+                    print("Cant select")
+                    # animations.Animations.card_cant_select(self, cardd)
+                # Mouse button down (could be any)
                 if event.type == pygame.MOUSEBUTTONDOWN: 
-                    self.pressing = True
-                    # Cursor colliding with start button
-                    if self.collide_start and self.start_screen_active: 
-                        self.loading = True
-                        # Switch to play screen
-                        self.start_screen_active = False
-                        self.play_screen_active = True
-                    # Cards have already been generated and collisiosn have been checked earlier
-                    if self.generated_cards and self.collisions_checked:
-                        # PLAYER
-                        i = 0
-                        while i < len(self.player_cards):
-                            # Cursor colliding with player card 
-                            if self.p_colliding_with_card: # Tuple[bool, rect]
-                                # No card selected yet, Select card and place on board
-                                if self.card_selected == False:
-                                    pygame.event.post(self.select_event)
-                                # Card already selected, 'No.' animation plays
-                                else:
-                                    pygame.event.post(self.cant_select_event)
-                            i += 1
-                        i = 0
-                        while i < len(self.pc_cards): 
-                            # Cursor colliding with PC card
-                            if self.pc_colliding_with_card: # Tuple[bool, rect]
-                                # Player has selected a card and placed it on the board to fight
-                                if self.card_selected: # replace with player_cards[8?]
-                                    # If card is already revealed [7], then you can battle it
-                                    if self.pc_cards[7]:
-                                        break
-                                    # Card is not yet revealed [7], can't battle it
+                    # LEFT CLICK
+                    if event.button == 1:
+                        self.pressing = True
+                        # Cursor colliding with start button
+                        if self.collide_start and self.start_screen_active: 
+                            self.loading = True
+                            # Switch to play screen
+                            self.start_screen_active = False
+                            self.play_screen_active = True
+                        # Cards have already been generated and collisiosn have been checked earlier
+                        if self.generated_cards and self.collisions_checked:
+                            # PLAYER
+                            i = 0
+                            while i < len(self.player_cards):
+                                # Cursor colliding with player card 
+                                if self.p_colliding_with_card[i] is True and self.card_selected and self.card_to_collide != self.card_selected_rect:
+                                    # No card selected yet, Select card and place on board
+                                    if self.card_selected is False:
+                                        pygame.event.post(self.select_event)
+                                    # Card already selected, 'No.' animation plays
                                     else:
-                                        break
+                                        if self.card_selected_rect == self.card_to_collide:
+                                            # Cant select same card again
+                                            pygame.event.post(self.cant_select_event)
+                                i += 1
+                    # RIGHT CLICK
+                    elif event.button == 3:
+                        self.pressing = True
+                        if self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
+                            # Selecting second card (for combining cards)
+                            # check if theyre the same type of card (Grasshopper for instance)
+                            if self.first_card_to_combine[1] is self.second_card_to_combine[1]:
+                                self.selected_card_count += 1
+                                # SELECT BOTH CARDS and COMBINE
+                            else:
+                                pygame.event.post(self.cant_select_event)
+                        elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
+                            break
+                            # SHAKE CARD ANIMATION (CANT SELECT ANYMORE)
+                        # i = 0
+                        # while i < len(self.pc_cards): 
+                        #     # Cursor colliding with PC card
+                        #     if self.pc_colliding_with_card: # Tuple[bool, rect]
+                        #         # Player has selected a card and placed it on the board to fight
+                        #         if self.card_selected: # replace with player_cards[8?]
+                        #             # If card is already revealed [7], then you can battle it
+                        #             if self.pc_cards[7]:
+                        #                 break
+                        #             # Card is not yet revealed [7], can't battle it
+                        #             else:
+                        #                 break
 
-                                else:
-                                    break
-                            i += 1
+                        #         else:
+                        #             break
+                        #     i += 1
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False
                 # KEYDOWN events
