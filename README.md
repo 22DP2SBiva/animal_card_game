@@ -1,4 +1,4 @@
-# **Circle of !Fight**
+# **Animal card game**
 
 ###### - dzīvnieku kāršu spēle -
 
