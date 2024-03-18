@@ -7,13 +7,21 @@ import display
 # Constants
 WIDTH, HEIGHT = 1920, 1080
 FPS = 60
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 255, 0)
+
 HOVER_RUN_COUNT = 5
-SELECT_POSITION_X = 200
-SELECT_POSITION_Y = 400
+SELECT_POSITION_X = 900
+SELECT_POSITION_Y = 420
+
+PLAYER_CARD_POS_X = 500
+PLAYER_CARD_POS_Y = 680
+PC_CARD_POS_X = 500
+PC_CARD_POS_Y = 150
+CARD_SPACING = 160
 running = True # for checking if game should be running
 # Objects that should be displayed on the screen
 class Game:
@@ -22,6 +30,7 @@ class Game:
         pygame.init()
         pygame.font.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+
         pygame.display.set_caption("Animal card game")
 
         self.title_font = pygame.font.SysFont('Arial', 50)
@@ -118,13 +127,13 @@ class Game:
             self.player_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
             self.player_sub_list[4] = pygame.transform.scale(self.player_sub_list[4], (800,700))
             # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-            self.player_sub_list.append(pygame.Rect(400+x, 600, 150, 300)) # start button collsion rect index [5]
+            self.player_sub_list.append(pygame.Rect(PLAYER_CARD_POS_X + x, PLAYER_CARD_POS_Y, 150, 300)) # start button collsion rect index [5]
             # Add collision check bool
             self.player_sub_list.append(False) # always at start
             # Revealed bool (used for checking if player can currently see waht card it is)
             self.player_sub_list.append(False)
             # add position for further refrencing
-            self.player_sub_list.append([400+x,600])
+            self.player_sub_list.append([PLAYER_CARD_POS_X + x,PLAYER_CARD_POS_Y])
             # animation: is the card curretnly being animated?
             self.player_sub_list.append(False)
             # Color for debug mode
@@ -137,8 +146,9 @@ class Game:
             self.player_sub_list.append(False)
 
             # Store objects which need to be displayed to the screen
-            self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8]])
-            self.objects_to_display.append([self.player_sub_list[4], self.player_sub_list[8]])
+            # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
+            self.objects_to_display.append([self.player_sub_list[4], self.player_sub_list[8], False])
+            self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8], False])
 
             # PC CARDS
             
@@ -153,13 +163,13 @@ class Game:
             # Collision rects and checks
 
             # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-            self.pc_sub_list.append(pygame.Rect(400+x, 200, 150, 300)) # start button collsion rect index [5]
+            self.pc_sub_list.append(pygame.Rect(PC_CARD_POS_X + x, PC_CARD_POS_Y, 150, 300)) # start button collsion rect index [5]
             # Add collision check bool
             self.pc_sub_list.append(False) # check if cursor is over rect (start button) index [6]
             # Revealed bool (used for checking if player can currently see waht card it is)
             self.pc_sub_list.append(False) # always at start
             # add position for further refrencing
-            self.pc_sub_list.append([400+x,200])
+            self.pc_sub_list.append([PC_CARD_POS_X + x,PC_CARD_POS_Y])
             # animation: is the card curretnly being animated?
             self.pc_sub_list.append(False)
             # Color for debug mode
@@ -172,8 +182,8 @@ class Game:
             self.pc_sub_list.append(False)
             
             # Store objects which need to be displayed to the screen
-            self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8]])
-            self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8]])
+            self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8], False])
+            self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8], False])
 
             # append all items in player_sub_list to new empty list ath end of main player_cards list
             self.player_cards.append([])
@@ -187,7 +197,7 @@ class Game:
                 self.pc_cards[new_list].append(item)
             
             i += 1
-            x += 200 
+            x += CARD_SPACING
         self.generated_cards = True
 
     def start_screen(self):
@@ -403,7 +413,6 @@ class Game:
                         if cardd[11] == self.select_event:
                             # if card is at the middle of the screen, stop animation
                             if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
-                                self.card_selected = False
                                 # Disable event
                                 cardd[12] = 0
                             else:
