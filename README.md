@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# **Animal card game**
-=======
 # **Animal card  game**
->>>>>>> ec2ec8523eb035fa419bce3ad4cc8af48d36dcd2
 
 ###### - dzīvnieku kāršu spēle -
 

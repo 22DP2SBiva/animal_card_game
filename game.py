@@ -12,6 +12,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 255, 0)
+UNSELECTABLE = 180
 
 HOVER_RUN_COUNT = 5
 SELECT_POSITION_X = 900
@@ -31,7 +32,7 @@ class Game:
         pygame.font.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
-        pygame.display.set_caption("Animal card game")
+        pygame.display.set_caption("Wildcards")
 
         self.title_font = pygame.font.SysFont('Arial', 50)
 
@@ -43,16 +44,14 @@ class Game:
         self.select_e = pygame.USEREVENT + 3
         self.cant_select_e = pygame.USEREVENT + 4
         self.battle_e = pygame.USEREVENT + 5
-        self.color_grey_e = pygame.USEREVENT + 6
-        self.color_orig_e = pygame.USEREVENT + 7
+        self.make_selectable_e = pygame.USEREVENT + 6
 
         self.hover_event = pygame.event.Event(self.hover_e)
         self.move_to_starting_pos_event = pygame.event.Event(self.move_to_starting_pos_e)
         self.select_event = pygame.event.Event(self.select_e)
         self.cant_select_event = pygame.event.Event(self.cant_select_e)
         self.battle_event = pygame.event.Event(self.battle_e)
-        self.color_grey_event = pygame.event.Event(self.color_grey_e)
-        self.color_orig_event = pygame.event.Event(self.color_orig_e)
+        self.make_selectable_event = pygame.event.Event(self.make_selectable_e)
 
         # Animation handling variables
         self.animated_count = 0
@@ -69,27 +68,33 @@ class Game:
 
         self.displaying = False
         self.first_round = True
+        self.turn = "PLAYER" # Whose turn it is
+        self.drawing_unselectable = False # Are we drawing (1) unselectable card already?
+        self.colliding_pc = False # Are we colliding with a PC card?
         self.collisions_checked = False
         self.generated_cards = False
         self.starting_card_amount = 6 # first round card amount to deal to each player
         self.debug_mode = False # For debugging (shows all rects)
         self.card_to_collide = None
-        self.card_selected = False # If a card is currently selected to fight, then True
-        self.card_selected_rect = None # Currently selected card's rect
+        self.card_selected = False # If a PLAYER card is currently selected to fight, then True
+        self.card_selected_rect = None # Currently selected PLAYER card's rect
+        self.selected_card = None # Currently selected PLAYER card
         self.pressing = False # Mouse left button
+        self.battling = False # Are two cards currently battling?
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
+        self.combined_cards = False # Is the player/pc done combining their cards? each round checked for at the start
         self.first_card_to_combine = [] # First card to combine
         self.second_card_to_combine = [] # Second card to combine
 
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled)
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14                      15
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect)
         self.player_cards = []
-        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled)
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14                      15
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect)
         self.pc_cards = []
 
         # Tuples
@@ -150,6 +155,8 @@ class Game:
             self.player_sub_list.append(0)
             # Can the card move back?
             self.player_sub_list.append(False)
+            # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
+            self.player_sub_list.append(0)
 
             # Store objects which need to be displayed to the screen
             # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
@@ -186,6 +193,8 @@ class Game:
             self.pc_sub_list.append(0)
             # Can the card move back?
             self.pc_sub_list.append(False)
+            # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
+            self.pc_sub_list.append(0)
             
             # Store objects which need to be displayed to the screen
             self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8], False])
@@ -208,7 +217,7 @@ class Game:
 
     def start_screen(self):
         self.screen.fill(WHITE)
-        self.title_text = self.title_font.render('Animal card game', True, (0, 0, 0))
+        self.title_text = self.title_font.render('Wildcards', True, (0, 0, 0))
         self.screen.blit(self.title_text, (750,200))
         self.screen.blit(self.start_button, (700,300))
         self.start_rect = pygame.Rect(750, 300, 200, 150) # start button collsion rect
@@ -245,13 +254,19 @@ class Game:
                 # Goes through each collission check in the list (player cards) and if colliding with cursor then sets them accordingly
                 self.p_colliding_with_card = collisions.Collisions.deck_collide_check(self, self.p_rects, self.p_collission_checks, self.pos) # Player
                 self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos) # PC
+                
+                self.drawing_unselectable = False # For checking if an unselectable rect is being drawn``
                 i = 0
                 while i < len(self.p_colliding_with_card):
                     self.player_cards[i][6] = self.p_colliding_with_card[i] # Set colliding bool
+                    if self.p_colliding_with_card[i] is True:
+                        self.colliding_pc = False
                     i += 1
                 i = 0
                 while i < len(self.pc_colliding_with_card):
                     self.pc_cards[i][6] = self.pc_colliding_with_card[i] # Set colliding bool
+                    if self.pc_colliding_with_card[i] is True:
+                        self.colliding_pc = True
                     i += 1
                 # checks each card; If colliding with player card, and not curretnyl playing animation play animation Hover (using card rect as parameter)
                 i = 0
@@ -262,6 +277,7 @@ class Game:
                         self.player_cards[i][6] = True # collision check
                         # if no currently selected card, then animate
                         if self.card_selected is False:
+                            self.selected_card = self.player_cards[i]
                             pygame.event.post(self.hover_event)
                             new_event = self.hover_event
                             # Set the newly posted event as the cards' controlling event
@@ -284,29 +300,38 @@ class Game:
                                 self.player_cards[i][11] = new_event     
                         else:   
                             self.colliding = False
+                            if self.player_cards[i][14] != 0:
+                                self.player_cards[i][14] = 0
                     i += 1
                 # Check each pc card, if currently colliding with cursor then sets them accordingly
                 i = 0
                 while i < len(self.pc_colliding_with_card):
                     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
+                    print("PC Collisions check: \033[94m" + str(self.pc_colliding_with_card[i]) + " \033[0m")
+                    print("PC Animation check: \033[92m" + str(self.pc_cards[i][9]) + " \033[0m")
                     if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
-                        if self.card_selected is True:
+                        self.card_to_collide = self.pc_cards[i]
+                        if self.card_selected is True and self.pressing is True:
+                            print("Activating battle event")
                             # Card can be selected, so start battle sequence
-                            self.pc_cards[i][9] = True
+                            self.battling = True
                             pygame.event.post(self.battle_event)
                             new_event = self.battle_event
                             # Set the newly posted event as the cards' controlling event
                             self.pc_cards[i][11] = new_event
-                        else:
+                            self.selected_card[11] = new_event # set player selected card to activate upon battle event
+                        elif self.card_selected is False:
+                            print("CANT SELECT PC")
                             # Card can't be interacted with, so turn grey
-                            self.pc_cards[i][9] = True
-                            pygame.event.post(self.color_grey_event)
-                            new_event = self.color_grey_event
+                            pygame.event.post(self.cant_select_event)
+                            new_event = self.cant_select_event
                             # Set the newly posted event as the cards' controlling event
                             self.pc_cards[i][11] = new_event
-                    # If not colliding with anything
+                    # If not colliding with this card
                     elif self.pc_colliding_with_card[i] == False:
                         self.pc_cards[i][9] = False
+                        if self.pc_cards[i][14] != 0:
+                            self.pc_cards[i][14] = 0
                         # If current position of card is not the same as the starting position of the card, then move back to starting position
                         # ! TODO: TURN BACK TO ORIGINAL COLOR
                     i += 1
@@ -380,22 +405,23 @@ class Game:
                             pygame.event.post(self.hover_event)
                             cardd[11] = self.hover_event
                     # If the card is not colliding with anything and the card selected is not the same as the current indexed card rect, then move card back to starting position
-                    elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False:
+                    elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False and self.colliding_pc is False:
                         print("Move back to starting position")
                         # [11] is the current event, we are assigning the new event to it
                         pygame.event.post(self.move_to_starting_pos_event)
                         cardd[11] = self.move_to_starting_pos_event
                     # If cursor not collidng with anything but a card has already been selected (and this card is the selcted card)
                     elif cardd[6] is False and cardd[12] < self.run_count and cardd[5] == self.card_selected_rect:
-                        print("Selected 3")
-                        cardd[12] = 0
-                        cardd[13] = True
-                        # Set that a card is currently selected and which card is currently selected
-                        self.card_selected = True
-                        self.card_selected_rect = cardd[5]
+                        if self.battling is False: # If not battling any cards currently
+                            print("Selected 3")
+                            cardd[12] = 0
+                            cardd[13] = True
+                            # Set that a card is currently selected and which card is currently selected
+                            self.card_selected = True
+                            self.card_selected_rect = cardd[5]
 
-                        pygame.event.post(self.select_event)
-                        cardd[11] = self.select_event
+                            pygame.event.post(self.select_event)
+                            cardd[11] = self.select_event
             
             # EVENTS
             for event in pygame.event.get():
@@ -436,58 +462,86 @@ class Game:
                             # if card is at the middle of the screen, stop animation
                             if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
                                 # Disable event
-                                cardd[12] = 0
+                                cardd[12] = 5
                             else:
                                 cardd[12] = 1
                                 self.card_selected = True
                                 animations.Animations.card_select(self, cardd)
                 if event.type == self.cant_select_e:
-                    print("Cant select")
                     # animations.Animations.card_cant_select(self, cardd)
+                    for cardd in self.pc_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.cant_select_event:
+                            # If there is no card currently selected, then we can't select an enemy card for any reason, so display card as unselectable
+                            if self.card_selected is False and self.card_to_collide is cardd:
+                                cardd[14] = 1
+                    for cardd in self.player_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.cant_select_event:
+                            # If there is no card currently selected, then we can't select an enemy card for any reason, so display card as unselectable
+                            if self.card_selected is False and self.card_to_collide is cardd:
+                                cardd[14] = 1
+                if event.type == self.make_selectable_e:
+                    print("Make selectable")
+                    for cardd in self.pc_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.make_selectable_event:
+                            if self.card_selected is True or self.colliding is False:
+                                cardd[14] = 0
+                                # Disable event
+                                cardd[11] = None
+                
+                # Display un-selectable cards
+                if self.drawing_unselectable is False:
+                    for cardd in self.player_cards:
+                        if cardd[14] is not 0:
+                            self.drawing_unselectable = True
+                            unselectable_image = pygame.Surface(cardd[5].size) # the size of rect
+                            unselectable_image.set_alpha(UNSELECTABLE) # alpha level
+                            unselectable_image.fill((255,255,255)) # this fills the entire surface
+                            self.screen.blit(unselectable_image, [cardd[5].x, cardd[5].y]) # (0,0) are the top-left coordinates
+                            print("DRAWING PLAYER"+ str(cardd))
+                    for cardd in self.pc_cards:
+                        if cardd[14] is not 0:
+                            self.drawing_unselectable = True
+                            print("DRAWING PC" + str(cardd))
+                            unselectable_image = pygame.Surface(cardd[5].size) # the size of rect
+                            unselectable_image.set_alpha(UNSELECTABLE) # alpha level
+                            unselectable_image.fill((255,255,255)) # this fills the entire surface
+                            self.screen.blit(unselectable_image, [cardd[5].x, cardd[5].y]) # (0,0) are the top-left coordinates
+
                 # Battle animation
                 if event.type == self.battle_e:
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.battle_event:
-                            break
-                            # if card is at the middle of the screen, stop animation
-                            # if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
-                            #     # Disable event
-                            #     cardd[12] = 0
-                            # else:
-                            #     cardd[12] = 1
-                            #     self.card_selected = True
-                            #     animations.Animations.card_select(self, cardd)
-                # Color card grey (cant be selected)
-                if event.type == self.color_grey_e:
-                    for cardd in self.pc_cards:
-                        # Is this event the same event the card should be doing?
-                        if cardd[11] == self.battle_event:
-                            break
-                            # if card is at the middle of the screen, stop animation
-                            # if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
-                            #     # Disable event
-                            #     cardd[12] = 0
-                            # else:
-                            #     cardd[12] = 1
-                            #     self.card_selected = True
-                            #     animations.Animations.card_select(self, cardd)
-                # Turn color back to original color
-                if event.type == self.color_orig_e:
-                    for cardd in self.pc_cards:
-                        # Is this event the same event the card should be doing?
-                        if cardd[11] == self.battle_event:
-                            break
-                            # if card is at the middle of the screen, stop animation
-                            # if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
-                            #     # Disable event
-                            #     cardd[12] = 0
-                            # else:
-                            #     cardd[12] = 1
-                            #     self.card_selected = True
-                            #     animations.Animations.card_select(self, cardd)
+                            print("Battling")
+                            # Check if it's the PCs' turn, in whick case the PC would be attacking (third parameter is which card is attacking)
+                            if self.turn == "PC":
+                                if cardd[5].x == self.selected_card[5].x and cardd[5].y == self.selected_card[5].y:
+                                    # Disable event
+                                    cardd[12] = 5
+                                    self.selected_card[12] = 5
+                                else:
+                                    cardd[12] = 1
+                                    self.selected_card[12] = 1
+                                    animations.Animations.card_battle(self, cardd, self.selected_card, cardd)
+                            # Check if it's the PLAYERS' turn, in whick case the PLAYER would be attacking (third parameter is which card is attacking)
+                            elif self.turn == "PLAYER":
+                                print("Player battling")
+                                if self.selected_card[5].x == cardd[5].x and self.selected_card[5].y == cardd[5].y:
+                                    # Disable event
+                                    cardd[12] = 5
+                                    self.selected_card[12] = 0
+                                else:
+                                    cardd[12] = 1
+                                    self.selected_card[12] = 1
+                                    animations.Animations.card_battle(self, cardd, self.selected_card, self.selected_card)
+
+              
                 # Mouse button down (could be any)
                 if event.type == pygame.MOUSEBUTTONDOWN: 
+                    print("\033[31mPRESSED\033[0m")
                     # LEFT CLICK
                     if event.button == 1:
                         self.pressing = True
