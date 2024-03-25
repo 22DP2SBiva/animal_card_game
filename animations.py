@@ -1,4 +1,5 @@
 import pygame
+import math
 import display
 # pylint doest accept dynamically generated code, must use disable no member
 #pylint: disable=no-member
@@ -62,16 +63,17 @@ class Animations:
     def card_sort(self, card):
         return 1
     def card_battle(self, pc_card, player_card, attacking_card):
-        i = 0
-        start_rect_pc = [pc_card[5].x, pc_card[5].y]
-        start_rect_player = [player_card[5].x, player_card[5].y]
-
         if attacking_card == pc_card:
-            while i < FAST_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
-               
+            i = 0
+            start_rect = [pc_card[5].x, pc_card[5].y]
+            new_rect = [pc_card[5].x, pc_card[5].y]
+            distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
+            min_distance = 0.5
+            while i < FAST_SPEED and distance <= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+                # Moves the card slightly up in 5 int increments to simulate a hover effect
                 # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
-                x_smoothed = pc_card[5].x - player_card[5].x
-                y_smoothed = pc_card[5].y - player_card[5].y
+                x_smoothed = player_card[5].x  - pc_card[5].x
+                y_smoothed = player_card[5].y - pc_card[5].y
                 
                 # Determine the number of steps for movement (if reesult is zero, then use 1 instead, since we cant divide by zero)
                 num_steps = max(abs(x_smoothed), abs(y_smoothed)) if max(abs(x_smoothed), abs(y_smoothed)) != 0 else 1
@@ -85,15 +87,24 @@ class Animations:
                 pc_card[5].y += step_y
 
                 new_rect = [pc_card[5].x, pc_card[5].y]
-                i += 1
-            display.Display.modify_objects_to_display(self, start_rect_pc, new_rect, True)
 
-        elif attacking_card == player_card:
-            while i < FAST_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+                # Calculate distance between first object needs to be within second object to stop
+                distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
                 
-                 # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
-                x_smoothed = player_card[5].x - pc_card[5].x
-                y_smoothed = player_card[5].y - pc_card[5].y
+                i += 1
+                
+            display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+        else:
+            i = 0
+            start_rect = [player_card[5].x, player_card[5].y]
+            new_rect = [player_card[5].x, player_card[5].y]
+            distance = math.sqrt((pc_card[5].x - player_card[5].x)**2 + (pc_card[5].y - player_card[5].y)**2) 
+            min_distance = 0.5
+            while i < FAST_SPEED and distance <= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+                # Moves the card slightly up in 5 int increments to simulate a hover effect
+                # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
+                x_smoothed = pc_card[5].x  - player_card[5].x
+                y_smoothed = pc_card[5].y - player_card[5].y
                 
                 # Determine the number of steps for movement (if reesult is zero, then use 1 instead, since we cant divide by zero)
                 num_steps = max(abs(x_smoothed), abs(y_smoothed)) if max(abs(x_smoothed), abs(y_smoothed)) != 0 else 1
@@ -107,8 +118,10 @@ class Animations:
                 player_card[5].y += step_y
 
                 new_rect = [player_card[5].x, player_card[5].y]
+                # Calculate distance between first object needs to be within second object to stop
+                distance = math.sqrt((pc_card[5].x - player_card[5].x)**2 + (pc_card[5].y - player_card[5].y)**2) 
                 i += 1
-            display.Display.modify_objects_to_display(self, start_rect_player, new_rect, True)
+            display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
     def card_select(self, card):
         i = 0
         start_rect = [card[5].x, card[5].y]

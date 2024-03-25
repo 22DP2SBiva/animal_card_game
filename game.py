@@ -422,7 +422,9 @@ class Game:
 
                             pygame.event.post(self.select_event)
                             cardd[11] = self.select_event
-            
+            # BATTLING CHECK
+            if self.battling:
+                pygame.event.post(self.battle_event)
             # EVENTS
             for event in pygame.event.get():
                 # Close window
