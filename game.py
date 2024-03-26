@@ -568,18 +568,20 @@ class Game:
                                     if winner == cardd:
                                         print("Remove 1") 
                                         print(self.objects_to_display)
-                                        print(self.selected_card)
+                                        print([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                         print(cardd)
                                         self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                     elif winner is None:
                                         print("Remove both 2") 
-                                        print(self.selected_card)
-                                        print(cardd)
+                                        print(self.objects_to_display)
+                                        print([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
+                                        print([cardd[3], [cardd[5].x, cardd[5].y], False])
                                         self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
-                                        self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
+                                        self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                     else:
                                         print("Remove 3") 
-                                        print(self.selected_card)
+                                        print(self.objects_to_display)
+                                        print([cardd[3], [cardd[5].x, cardd[5].y], False])
                                         print(cardd)
                                         self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                     
