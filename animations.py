@@ -68,8 +68,9 @@ class Animations:
             start_rect = [pc_card[5].x, pc_card[5].y]
             new_rect = [pc_card[5].x, pc_card[5].y]
             distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
+            print(distance)
             min_distance = 0.5
-            while i < FAST_SPEED and distance <= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+            while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
                 # Moves the card slightly up in 5 int increments to simulate a hover effect
                 # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
                 x_smoothed = player_card[5].x  - pc_card[5].x
@@ -99,8 +100,9 @@ class Animations:
             start_rect = [player_card[5].x, player_card[5].y]
             new_rect = [player_card[5].x, player_card[5].y]
             distance = math.sqrt((pc_card[5].x - player_card[5].x)**2 + (pc_card[5].y - player_card[5].y)**2) 
+            print(distance)
             min_distance = 0.5
-            while i < FAST_SPEED and distance <= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+            while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
                 # Moves the card slightly up in 5 int increments to simulate a hover effect
                 # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
                 x_smoothed = pc_card[5].x  - player_card[5].x
