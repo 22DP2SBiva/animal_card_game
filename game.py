@@ -46,6 +46,7 @@ class Game:
         self.cant_select_e = pygame.USEREVENT + 4
         self.battle_e = pygame.USEREVENT + 5
         self.make_selectable_e = pygame.USEREVENT + 6
+        self.move_to_new_pos = pygame.USEREVENT + 7
 
         self.hover_event = pygame.event.Event(self.hover_e)
         self.move_to_starting_pos_event = pygame.event.Event(self.move_to_starting_pos_e)
@@ -53,6 +54,7 @@ class Game:
         self.cant_select_event = pygame.event.Event(self.cant_select_e)
         self.battle_event = pygame.event.Event(self.battle_e)
         self.make_selectable_event = pygame.event.Event(self.make_selectable_e)
+        self.move_to_new_pos = pygame.event.Event(self.move_to_new_pos)
 
         # Animation handling variables
         self.animated_count = 0
@@ -76,6 +78,7 @@ class Game:
         self.generated_cards = False
         self.battled_pc_card = "Brr"
         self.move_back_disabled = False
+        self.new_positions = [] # If there are any new positions that cards should be moved to, they will be stored in this list
         self.starting_card_amount = 6 # first round card amount to deal to each player
         self.debug_mode = False # For debugging (shows all rects)
         self.card_to_collide = None
@@ -87,6 +90,7 @@ class Game:
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
         self.combined_cards = False # Is the player/pc done combining their cards? each round checked for at the start
+        self.sorting_cards = False 
         self.first_card_to_combine = [] # First card to combine
         self.second_card_to_combine = [] # Second card to combine
 
@@ -228,7 +232,21 @@ class Game:
 
         self.screen.blit(self.options_button, (700,500))
         self.screen.blit(self.exit_button, (700,700))
-    
+    def blind_find(self, specified_list, value):
+        # Checks list for value and returns the sublist the value is a part of
+        
+        # Iterate through the specified list
+        for index, sublist in enumerate(specified_list):
+            # Check if the known value is in the sublist
+            if value in sublist:
+                # If found, return value
+                return sublist
+                break  # Exit the loop if found
+    def sort_cards(self, object_list, player_card_count, pc_card_count):
+        self.sorting_cards = True
+        # Sort all cards
+        self.new_positions = animations.Animations.sort_card_positions(self, object_list, player_card_count, pc_card_count)
+
     def run(self):
         global running
         while running:
@@ -453,6 +471,7 @@ class Game:
                                 cardd[12] += 1
                 # if card hovering called and still should be animating this card
                 if event.type == self.move_to_starting_pos_e:
+                    print("Moving back")
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_starting_pos_event:
@@ -464,6 +483,7 @@ class Game:
                                 cardd[12] += 1
                 # Select a card
                 if event.type == self.select_e and self.card_selected is True:
+                    print("Selecting card")
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.select_event:
@@ -498,7 +518,7 @@ class Game:
                                 cardd[14] = 0
                                 # Disable event
                                 cardd[11] = None
-                
+                            
                 # Display un-selectable cards
                 if self.drawing_unselectable is False:
                     for cardd in self.player_cards:
@@ -524,6 +544,8 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.battle_event:
                             print("Battling")
+                            selected_card_pos = [self.selected_card[5].x, self.selected_card[5].y]
+                            cardd_pos = [cardd[5].x, cardd[5].y]
                             # Check if it's the PCs' turn, in whick case the PC would be attacking (third parameter is which card is attacking)
                             if self.turn == "PC":
                                 if cardd[5].x == self.selected_card[5].x and cardd[5].y == self.selected_card[5].y:
@@ -567,29 +589,39 @@ class Game:
                                     # Check which card has won, remove the other card
                                     if winner == cardd:
                                         print("Remove 1") 
-                                        print(self.objects_to_display)
-                                        print([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
-                                        print(cardd)
+                                        
                                         self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
+                                        basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
+                                        print(basecard)
+                                        self.objects_to_display.remove(basecard)
+                                        
                                     elif winner is None:
                                         print("Remove both 2") 
-                                        print(self.objects_to_display)
-                                        print([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
-                                        print([cardd[3], [cardd[5].x, cardd[5].y], False])
                                         self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
-                                        self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
-                                    else:
-                                        print("Remove 3") 
-                                        print(self.objects_to_display)
-                                        print([cardd[3], [cardd[5].x, cardd[5].y], False])
+                                        basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
+                                        self.objects_to_display.remove(basecard)
                                         print(cardd)
                                         self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
+                                        basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
+                                        print(self.objects_to_display)
+                                        print(basecard)
+                                        self.objects_to_display.remove(basecard)
+                                    else:
+                                        print("Remove 3") 
+                                        self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
+                                        basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
+                                        self.objects_to_display.remove(basecard)
+                                    # Sort cards
+                                    print("Sorts cards")
                                     
-
+                                    Game.sort_cards(self, self.objects_to_display, len(self.player_cards), len(self.pc_cards))
                                 else:
                                     cardd[12] = 1
                                     self.selected_card[12] = 1
-                                    animations.Animations.card_battle(self, cardd, self.selected_card, cardd)
+                                    animations.Animations.card_battle(self, cardd, self.selected_card, self.selected_card)
+                if self.sorting_cards:
+                    # Move the cards to the new positions incrementally
+                    animations.Animations.move_card_to_new_pos(self, self.objects_to_display, self.new_positions)
                 # Check if any cards have been deleted, then disable battle mode
                 if self.selected_card is None or self.battled_pc_card is None:
                     print("Does this")

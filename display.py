@@ -9,7 +9,7 @@ class Display:
         display_last = False
         while i < len(self.objects_to_display):
             # Check if the object should be rendered at the top most layer
-            if self.objects_to_display[i][2] is True: 
+            if self.objects_to_display[i][2] is True:
                 display_last = True
                 base_of_last_object = [self.objects_to_display[i - 1][0], self.objects_to_display[i - 1][1]] # base card
                 last_object = [self.objects_to_display[i][0], self.objects_to_display[i][1]] # card image
