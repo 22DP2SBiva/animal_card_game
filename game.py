@@ -46,7 +46,7 @@ class Game:
         self.cant_select_e = pygame.USEREVENT + 4
         self.battle_e = pygame.USEREVENT + 5
         self.make_selectable_e = pygame.USEREVENT + 6
-        self.move_to_new_pos = pygame.USEREVENT + 7
+        self.move_to_new_pos_e = pygame.USEREVENT + 7
 
         self.hover_event = pygame.event.Event(self.hover_e)
         self.move_to_starting_pos_event = pygame.event.Event(self.move_to_starting_pos_e)
@@ -54,7 +54,7 @@ class Game:
         self.cant_select_event = pygame.event.Event(self.cant_select_e)
         self.battle_event = pygame.event.Event(self.battle_e)
         self.make_selectable_event = pygame.event.Event(self.make_selectable_e)
-        self.move_to_new_pos = pygame.event.Event(self.move_to_new_pos)
+        self.move_to_new_pos_event = pygame.event.Event(self.move_to_new_pos_e)
 
         # Animation handling variables
         self.animated_count = 0
@@ -90,7 +90,8 @@ class Game:
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
         self.combined_cards = False # Is the player/pc done combining their cards? each round checked for at the start
-        self.sorting_cards = False 
+        self.sorting_cards = False # If cards are being sorted/ and or moved while sorting, then True
+        self.done_base_sort = False # If cards new positions have been set, then True
         self.first_card_to_combine = [] # First card to combine
         self.second_card_to_combine = [] # Second card to combine
 
@@ -234,18 +235,24 @@ class Game:
         self.screen.blit(self.exit_button, (700,700))
     def blind_find(self, specified_list, value):
         # Checks list for value and returns the sublist the value is a part of
-        
         # Iterate through the specified list
-        for index, sublist in enumerate(specified_list):
+        for sublist in specified_list:
             # Check if the known value is in the sublist
             if value in sublist:
                 # If found, return value
                 return sublist
-                break  # Exit the loop if found
-    def sort_cards(self, object_list, player_card_count, pc_card_count):
-        self.sorting_cards = True
-        # Sort all cards
-        self.new_positions = animations.Animations.sort_card_positions(self, object_list, player_card_count, pc_card_count)
+    def sort_cards(self, object_list):
+        self.sorting_cards = True # Started sorting cards
+        # Sort all cards in list position-wise
+        self.new_positions = animations.Animations.sort_card_positions(self, object_list, self.player_cards,  self.pc_cards)
+        # Set all cards' current event to moving to new position event
+        for cardd in self.player_cards:
+            print(cardd)
+            cardd[11] = self.move_to_new_pos_event
+        for cardd in self.pc_cards:
+            print(cardd)
+            cardd[11] = self.move_to_new_pos_event
+        self.done_base_sort = True # Done sorting card position in list
 
     def run(self):
         global running
@@ -449,6 +456,9 @@ class Game:
             # BATTLING CHECK
             if self.battling:
                 pygame.event.post(self.battle_event)
+            # SORTING CHECK
+            if self.sorting_cards and self.done_base_sort:
+                pygame.event.post(self.move_to_new_pos_event)
             # EVENTS
             for event in pygame.event.get():
                 # Close window
@@ -518,6 +528,32 @@ class Game:
                                 cardd[14] = 0
                                 # Disable event
                                 cardd[11] = None
+                if event.type == self.move_to_new_pos_e:
+                    print("Move to NEW POS")
+                    i = 0
+                    for cardd in self.player_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.move_to_new_pos_event:
+                            # new positions: [0] is the main sublist, [index] is the current value(position), [0] is the x value
+                            if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
+                                # Disable event
+                                cardd[12] = 5
+                            else:
+                                print("player moving")
+                                cardd[12] = 1
+                                animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
+                    for cardd in self.pc_cards:
+                        # Is this event the same event the card should be doing?
+                        if cardd[11] == self.move_to_new_pos_event:
+                            if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
+                                # Disable event
+                                cardd[12] = 5
+                            else:
+                                print("pc moving")
+                                cardd[12] = 1
+                                animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
+                    i += 1
+                   
                             
                 # Display un-selectable cards
                 if self.drawing_unselectable is False:
@@ -614,14 +650,11 @@ class Game:
                                     # Sort cards
                                     print("Sorts cards")
                                     
-                                    Game.sort_cards(self, self.objects_to_display, len(self.player_cards), len(self.pc_cards))
+                                    Game.sort_cards(self, self.objects_to_display)
                                 else:
                                     cardd[12] = 1
                                     self.selected_card[12] = 1
                                     animations.Animations.card_battle(self, cardd, self.selected_card, self.selected_card)
-                if self.sorting_cards:
-                    # Move the cards to the new positions incrementally
-                    animations.Animations.move_card_to_new_pos(self, self.objects_to_display, self.new_positions)
                 # Check if any cards have been deleted, then disable battle mode
                 if self.selected_card is None or self.battled_pc_card is None:
                     print("Does this")
