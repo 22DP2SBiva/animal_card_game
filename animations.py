@@ -7,8 +7,6 @@ SPEED = 2
 FAST_SPEED = 30
 SELECT_POSITION_X = 900
 SELECT_POSITION_Y = 420
-DEFAULT_PC_POS = [600, 200] # Default first pc card position to be displayed starting position
-DEFAULT_PLAYER_POS = [600, 200] # Default first player card position to be displayed starting position
 class Animations:
     """Animates card being hovered over (moves slightly up and stops).
 
@@ -66,39 +64,66 @@ class Animations:
     def sort_card_positions(self, cards, player_cards, pc_cards):
         # PC
         pc_left_padding = 200
-        pc_spaces = 20
+        pc_spaces = 200
         new_card_positions_pc = []
         # Defines spacing ranges for pc cards
-        for num in range(len(self.pc_cards) - 1):
-            pc_left_padding -= 10 # The more cards, the less padding there is from the left side of the screen
-            pc_spaces -= 5 # The more cards, the smaller spaces in-between
-        # Sets positions for pc cards
         i = 0
-        while i < len(self.pc_cards):
+        # Times Two used because including base card positions
+        while i < len(self.pc_cards) * 2:
+            pc_left_padding -= 20 # The more cards, the less padding there is from the left side of the screen
+            pc_spaces -= 5 # The more cards, the smaller spaces in-between
+            # Sets positions for pc cards
             if i == 0:
-                pos = DEFAULT_PC_POS
-                pos[0] += pc_left_padding
+                pos1 = [-750, 150]
+                print("default", str(pos1))
+                pos1[0] += pc_left_padding
+                print("padded", str(pos1))
+                new_card_positions_pc.append(pos1.copy())
             else:
-                pos[0] += pc_spaces
-            new_card_positions_pc.append(pos)
+                print(pc_cards)
+                distance = math.sqrt((pos1[0] - cards[i][1][0])**2 + (pos1[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
+                # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
+                if distance > pc_spaces:
+                    pos1[0] -= pc_spaces
+                    print("n", str(pos1))
+                    new_card_positions_pc.append(pos1.copy())
+                else:
+                    pos1[0] += pc_spaces
+                    print("n", str(pos1))
+                    new_card_positions_pc.append(pos1.copy())
+            
             i += 1
         # PLAYER
         player_left_padding = 200
-        player_spaces = 20
+        player_spaces = 200
         new_card_positions_player = []
         # Defines spacing ranges for pc cards
-        for num in range(len(self.pc_cards) - 1):
-            player_left_padding -= 10 # The more cards, the less padding there is from the left side of the screen
-            player_spaces -= 5 # The more cards, the smaller spaces in-between
-        # Sets positions for pc cards
         i = 0
-        while i < len(self.player_cards):
+        # Times Two used because including base card positions
+        while i < len(self.player_cards) * 2:
+            player_left_padding -= 20 # The more cards, the less padding there is from the left side of the screen
+            player_spaces -= 5 # The more cards, the smaller spaces in-between
+            # Sets positions for pc cards
             if i == 0:
-                pos = DEFAULT_PLAYER_POS
-                pos[0] += player_left_padding
+                pos2 = [300, 650]
+                print("default", str(pos2))
+                pos2[0] += player_left_padding
+                print("padded", str(pos2))
+                new_card_positions_player.append(pos2.copy())
             else:
-                pos[0] += player_spaces
-            new_card_positions_player.append(pos)
+                distance = math.sqrt((pos2[0] - cards[i][1][0])**2 + (pos2[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
+                print(distance)
+                # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
+                if distance <= player_spaces:
+                    pos2[0] -= player_spaces
+                    print("n", str(pos2))
+                    new_card_positions_player.append(pos2.copy())
+                else:
+                    pos2[0] += player_spaces
+                    print("n", str(pos2))
+                    new_card_positions_player.append(pos2.copy())
+                
+            
             i += 1
         # Return list with 2 sublists: player card positions and pc card positions
         return [new_card_positions_player, new_card_positions_pc]
@@ -113,7 +138,6 @@ class Animations:
             # Aditionally, in new_positions first [0] is the current loop index, second [0] is the position tuple and [1] is the y value of the position
             # Moves the card slightly up in 5 int increments to simulate a hover effect
             # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
-            
             x_smoothed = new_position[0]  - card[5][0]
             y_smoothed = new_position[1] - card[5][1]
             
@@ -129,11 +153,9 @@ class Animations:
             card[5][1] += step_y
 
             new_rect = [card[5][0], card[5][1]]
-            print(new_rect)
 
             
             i += 1
-        print(start_rect, new_rect)
         display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
 
     def card_battle(self, pc_card, player_card, attacking_card):

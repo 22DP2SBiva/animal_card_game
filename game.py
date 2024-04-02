@@ -244,13 +244,11 @@ class Game:
     def sort_cards(self, object_list):
         self.sorting_cards = True # Started sorting cards
         # Sort all cards in list position-wise
-        self.new_positions = animations.Animations.sort_card_positions(self, object_list, self.player_cards,  self.pc_cards)
+        self.new_positions = animations.Animations.sort_card_positions(self, object_list, self.player_cards, self.pc_cards)
         # Set all cards' current event to moving to new position event
         for cardd in self.player_cards:
-            print(cardd)
             cardd[11] = self.move_to_new_pos_event
         for cardd in self.pc_cards:
-            print(cardd)
             cardd[11] = self.move_to_new_pos_event
         self.done_base_sort = True # Done sorting card position in list
 
@@ -336,8 +334,6 @@ class Game:
                 i = 0
                 while i < len(self.pc_colliding_with_card):
                     # If new collsion check made for this card (i) is True, and not currently animating card, then play animation  
-                    print("PC Collisions check: \033[94m" + str(self.pc_colliding_with_card[i]) + " \033[0m")
-                    print("PC Animation check: \033[92m" + str(self.pc_cards[i][9]) + " \033[0m")
                     if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
                         self.card_to_collide = self.pc_cards[i]
                         if self.card_selected is True and self.pressing is True:
@@ -459,6 +455,7 @@ class Game:
             # SORTING CHECK
             if self.sorting_cards and self.done_base_sort:
                 pygame.event.post(self.move_to_new_pos_event)
+                print(self.new_positions)
             # EVENTS
             for event in pygame.event.get():
                 # Close window
@@ -534,25 +531,27 @@ class Game:
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
-                            # new positions: [0] is the main sublist, [index] is the current value(position), [0] is the x value
+                            # new positions:
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
                                 cardd[12] = 5
                             else:
                                 print("player moving")
                                 cardd[12] = 1
+                                print("First", str(self.new_positions[0][i]))
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
+                            i += 1
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
-                            if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
+                            if cardd[5].x == self.new_positions[1][i][0] and cardd[5].y == self.new_positions[1][i][1]:
                                 # Disable event
                                 cardd[12] = 5
                             else:
                                 print("pc moving")
                                 cardd[12] = 1
-                                animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
-                    i += 1
+                                animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[1][i])
+                            i += 1
                    
                             
                 # Display un-selectable cards
