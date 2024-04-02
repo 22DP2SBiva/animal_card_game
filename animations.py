@@ -74,23 +74,23 @@ class Animations:
             pc_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos1 = [-750, 150]
+                pos1 = [300, 150]
                 print("default", str(pos1))
                 pos1[0] += pc_left_padding
                 print("padded", str(pos1))
                 new_card_positions_pc.append(pos1.copy())
             else:
-                print(pc_cards)
-                distance = math.sqrt((pos1[0] - cards[i][1][0])**2 + (pos1[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
-                # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
-                if distance > pc_spaces:
-                    pos1[0] -= pc_spaces
-                    print("n", str(pos1))
-                    new_card_positions_pc.append(pos1.copy())
-                else:
-                    pos1[0] += pc_spaces
-                    print("n", str(pos1))
-                    new_card_positions_pc.append(pos1.copy())
+                # print(pc_cards)
+                # distance = math.sqrt((pos1[0] - cards[i][1][0])**2 + (pos1[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
+                # # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
+                # if distance > pc_spaces:
+                #     pos1[0] -= pc_spaces
+                #     print("n", str(pos1))
+                #     new_card_positions_pc.append(pos1.copy())
+                # else:
+                pos1[0] += pc_spaces
+                print("n", str(pos1))
+                new_card_positions_pc.append(pos1.copy())
             
             i += 1
         # PLAYER
@@ -111,17 +111,17 @@ class Animations:
                 print("padded", str(pos2))
                 new_card_positions_player.append(pos2.copy())
             else:
-                distance = math.sqrt((pos2[0] - cards[i][1][0])**2 + (pos2[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
-                print(distance)
-                # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
-                if distance <= player_spaces:
-                    pos2[0] -= player_spaces
-                    print("n", str(pos2))
-                    new_card_positions_player.append(pos2.copy())
-                else:
-                    pos2[0] += player_spaces
-                    print("n", str(pos2))
-                    new_card_positions_player.append(pos2.copy())
+                # distance = math.sqrt((pos2[0] - cards[i][1][0])**2 + (pos2[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
+                # print(distance)
+                # # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
+                # if distance <= player_spaces:
+                #     pos2[0] -= player_spaces
+                #     print("n", str(pos2))
+                #     new_card_positions_player.append(pos2.copy())
+                # else:
+                pos2[0] += player_spaces
+                print("n", str(pos2))
+                new_card_positions_player.append(pos2.copy())
                 
             
             i += 1
