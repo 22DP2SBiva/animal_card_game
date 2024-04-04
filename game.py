@@ -5,6 +5,7 @@ import collisions
 import animations
 import display
 import battle_logic
+import math
 # Constants
 WIDTH, HEIGHT = 1920, 1080
 FPS = 60
@@ -252,8 +253,22 @@ class Game:
         # Delay for 5 seconds
         pygame.time.delay(1200) 
         self.battling = False
+        self.sorting_cards = False
+        self.selected_card = None
+        for cardd in self.player_cards:
+            cardd[9] = False
+            cardd[11] = None # Disable all events for this card
+            cardd[12] = 0
+            cardd[13] = False
+        for cardd in self.pc_cards:
+            cardd[9] = False
+            cardd[11] = None # Disable all events for this card
+            cardd[12] = 0
+            cardd[13] = False
         # Disable this animation
         self.display_turn = False
+    def distance(self, x1, y1, x2, y2):
+        return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
     def blind_find(self, specified_list, value):
         # Checks list for value and returns the sublist the value is a part of
         # Iterate through the specified list
@@ -411,7 +426,7 @@ class Game:
                 if self.turn == "PC":
                     # Not yet battling
                     if self.battling is False:
-                        pygame.time.delay(300) # Wait a couple seconds to not be jarring
+                        pygame.time.delay(3000) # Wait a couple seconds to not be jarring
                         self.card_selected = False # Reset this since there can't be any cards selected
                         i = 0
                         xtra_points = [] # AI token system (list), tries to battle cards which give it more points
@@ -433,7 +448,6 @@ class Game:
                             
                             # Set card to battle according to current highest points/tier
                             for sublist in xtra_points:
-                                print(sublist)
                                 if 3 in sublist:
                                     self.selected_card = sublist[1]
                                 elif 2 in sublist and self.selected_card is None:
@@ -536,7 +550,6 @@ class Game:
                 # SORTING CHECK
                 if self.sorting_cards and self.done_base_sort:
                     pygame.event.post(self.move_to_new_pos_event)
-                    print(self.new_positions)
                 # EVENTS
             for event in pygame.event.get():
                 # Close window
@@ -615,9 +628,11 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
                             # new positions:
-                            print(i)
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
+                                print("DISABLE Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
+                                if cardd == self.selected_card:
+                                    pygame.time.delay(3000)
                                 cardd[12] = 5
                                 player_cards_reached_pos_count += 1
                             else:
@@ -626,14 +641,13 @@ class Game:
                                 print("player moving")
                                 cardd[12] = 1
                                 print("First", str(self.new_positions[0][i]))
+                                print("Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
                             i += 1
                     pc_cards_reached_pos_count = 0
                     i = 0
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
-                        print(self.pc_cards)
-                        print(i)
                         if cardd[11] == self.move_to_new_pos_event:
                             if cardd[5].x == self.new_positions[1][i][0] and cardd[5].y == self.new_positions[1][i][1]:
                                 # Disable event
@@ -653,7 +667,7 @@ class Game:
                         # END TURN
                         self.turn = self.next_turn
                         self.display_turn = True
-                        pygame.time.delay(300)
+                        pygame.time.delay(1000)
                         self.turn_count += 1
                         Game.new_turn(self) # Show turn cahnge animation
                    
@@ -685,9 +699,12 @@ class Game:
                             print("Battling")
                             selected_card_pos = [self.selected_card[5].x, self.selected_card[5].y]
                             cardd_pos = [cardd[5].x, cardd[5].y]
+                            min_distance = 40 # minimum distance till "hit" target position
                             # Check if it's the PCs' turn, in whick case the PC would be attacking (third parameter is which card is attacking)
                             if self.turn == "PC":
-                                if cardd[5].x == self.selected_card[5].x and cardd[5].y == self.selected_card[5].y:
+                                # Calculate distance between pc card and player card
+                                distance_to_target = Game.distance(self,cardd[5].x, cardd[5].y, self.selected_card[5].x, self.selected_card[5].y)
+                                if distance_to_target <= min_distance:
                                     # Disable event
                                     cardd[12] = 5
                                     self.battled_pc_card = cardd
@@ -696,7 +713,6 @@ class Game:
                                     winner = battle_logic.Battle_Logic.determine_outcome(self, self.selected_card, cardd)    
                                     if winner == cardd:
                                         print("Remove 1")
-                                        print(self.selected_card)
                                         if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                             self.player_cards.remove(self.selected_card)
@@ -704,7 +720,6 @@ class Game:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
                                             self.player_cards.remove(self.selected_card)
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
-                                        print(basecard)
                                         self.objects_to_display.remove(basecard)
                                         self.player_lives -= 1
                                         
@@ -718,7 +733,6 @@ class Game:
                                             self.player_cards.remove(self.selected_card)
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
-                                        print(cardd)
                                         if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             self.pc_cards.remove(cardd)
@@ -726,8 +740,6 @@ class Game:
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                             self.pc_cards.remove(cardd)
                                         basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
-                                        print(self.objects_to_display)
-                                        print(basecard)
                                         self.objects_to_display.remove(basecard)
                                         self.player_lives -= 1
                                         self.pc_lives -= 1
@@ -755,7 +767,8 @@ class Game:
                             # Check if it's the PLAYERS' turn, in whick case the PLAYER would be attacking (third parameter is which card is attacking)
                             elif self.turn == "PLAYER":
                                 print("Player battling")
-                                if self.selected_card[5].x == cardd[5].x and self.selected_card[5].y == cardd[5].y:
+                                distance_to_target = Game.distance(self, self.selected_card[5].x, self.selected_card[5].y, cardd[5].x, cardd[5].y)
+                                if distance_to_target <= min_distance:
                                     # Disable event
                                     cardd[12] = 5
                                     self.selected_card[12] = 5
@@ -774,7 +787,6 @@ class Game:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
                                             self.player_cards.remove(self.selected_card)
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
-                                        print(basecard)
                                         self.objects_to_display.remove(basecard)
                                         self.pc_lives -= 1
                                         
@@ -789,7 +801,6 @@ class Game:
                                             
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
-                                        print(cardd)
                                         if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             self.pc_cards.remove(cardd)
@@ -797,8 +808,6 @@ class Game:
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                             self.pc_cards.remove(cardd)
                                         basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
-                                        print(self.objects_to_display)
-                                        print(basecard)
                                         self.objects_to_display.remove(basecard)
                                         self.player_lives -= 1
                                         self.pc_lives -= 1

@@ -70,8 +70,12 @@ class Animations:
         i = 0
         # Times Two used because including base card positions
         while i < len(self.pc_cards) * 2:
-            pc_left_padding -= 20 # The more cards, the less padding there is from the left side of the screen
-            pc_spaces -= 5 # The more cards, the smaller spaces in-between
+            if len(self.pc_cards) * 2 <= 6:
+                pc_left_padding += 50 # The more cards, the less padding there is from the left side of the screen
+                pc_spaces += 5 # The more cards, the smaller spaces in-between
+            else:
+                pc_left_padding -= 40 # The more cards, the less padding there is from the left side of the screen
+                pc_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
                 pos1 = [300, 150]
@@ -165,7 +169,7 @@ class Animations:
             new_rect = [pc_card[5].x, pc_card[5].y]
             distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
             print(distance)
-            min_distance = 0.5
+            min_distance = 5
             while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
                 # Moves the card slightly up in 5 int increments to simulate a hover effect
                 # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
@@ -189,8 +193,15 @@ class Animations:
                 distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
                 
                 i += 1
-                
-            display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+            # Checks and makes sure that only one card image is being displayed on top (not counting base card)
+            if True in self.objects_to_display:
+                for card in self.objects_to_display:
+                    if card[2] is True and start_rect == card[1]:
+                        display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                    else:
+                        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+            else:
+                display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
         else:
             i = 0
             start_rect = [player_card[5].x, player_card[5].y]
@@ -219,7 +230,15 @@ class Animations:
                 # Calculate distance between first object needs to be within second object to stop
                 distance = math.sqrt((pc_card[5].x - player_card[5].x)**2 + (pc_card[5].y - player_card[5].y)**2) 
                 i += 1
-            display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+            # Checks and makes sure that only one card image is being displayed on top (not counting base card)
+            if True in self.objects_to_display:
+                for card in self.objects_to_display:
+                    if card[2] is True and start_rect == card[1]:
+                        display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                    else:
+                        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+            else:
+                display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
     def card_select(self, card):
         i = 0
         start_rect = [card[5].x, card[5].y]

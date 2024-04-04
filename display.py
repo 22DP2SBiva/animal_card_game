@@ -10,9 +10,20 @@ class Display:
         while i < len(self.objects_to_display):
             # Check if the object should be rendered at the top most layer
             if self.objects_to_display[i][2] is True:
+                print(self.objects_to_display)
                 display_last = True
-                base_of_last_object = [self.objects_to_display[i - 1][0], self.objects_to_display[i - 1][1]] # base card
-                last_object = [self.objects_to_display[i][0], self.objects_to_display[i][1]] # card image
+                # Search through all objects to find base card that mathes position of this top image card (but not the same object)
+                x = 0 # debug value
+                for obj in self.objects_to_display:
+                    if obj[1] == self.objects_to_display[i][1] and obj[0] != self.objects_to_display[i][0]:
+                        base_of_last_object = obj # base card
+                    elif obj[1] == self.objects_to_display[i][1] and obj[0] == self.objects_to_display[i][0]:
+                        print("Same image")
+                    elif obj[1] != self.objects_to_display[i][1]:
+                        print("Not base card pos ", str(obj[1]))
+                    print("Image pos ", str(self.objects_to_display[i][1]))
+                    x += 1
+                last_object = self.objects_to_display[i] # card image
             else:
                 # Clarification:  image      position
                 self.screen.blit(self.objects_to_display[i][0], self.objects_to_display[i][1])
@@ -21,6 +32,10 @@ class Display:
         if display_last:
             self.screen.blit(base_of_last_object[0], base_of_last_object[1]) # base card
             self.screen.blit(last_object[0], last_object[1]) # card image
+
+            #DEBUG
+            self.screen.blit(base_of_last_object[0], [255,255]) # base card
+            self.screen.blit(last_object[0], [355,355]) # card image
     # Modify specified object that you still want to be dislayed to the screen
     def modify_objects_to_display(self, old_value, new_value, top_most_layer):
         # Check all items in specified list
