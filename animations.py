@@ -29,7 +29,7 @@ class Animations:
             # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
             i += 1
         display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
-    def move_to_starting_pos(self, card):
+    def move_to_starting_pos(self, card, turn_1, new_position):
         i = 0
         start_rect = [card[5].x, card[5].y]
         while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
@@ -37,24 +37,44 @@ class Animations:
             # Checks if card current position X is the same as the starting position X
             new_rect = [card[5].x, card[5].y]
             # Checks x and y positions of card and desired position, then moves it accordingly
-            if card[5].x != card[8][0]:
+            if turn_1:
+                if card[5].x != card[8][0]:
 
-                if card[5].x > card[8][0]:
-                    card[5].x -= 1 # move card left slightly
-                    new_rect = [card[5].x, card[5].y]
-                if card[5].x < card[8][0]:
-                    card[5].x += 1 # move card right slightly
-                    new_rect = [card[5].x, card[5].y]
+                    if card[5].x > card[8][0]:
+                        card[5].x -= 1 # move card left slightly
+                        new_rect = [card[5].x, card[5].y]
+                    if card[5].x < card[8][0]:
+                        card[5].x += 1 # move card right slightly
+                        new_rect = [card[5].x, card[5].y]
 
-            if card[5].y != card[8][1]:
+                if card[5].y != card[8][1]:
 
-                if card[5].y > card[8][1]:
-                    card[5].y -= 1 # move card up slightly
-                    new_rect = [card[5].x, card[5].y]
+                    if card[5].y > card[8][1]:
+                        card[5].y -= 1 # move card up slightly
+                        new_rect = [card[5].x, card[5].y]
 
-                if card[5].y < card[8][1]:
-                    card[5].y += 1 # move card down slightly
-                    new_rect = [card[5].x, card[5].y]
+                    if card[5].y < card[8][1]:
+                        card[5].y += 1 # move card down slightly
+                        new_rect = [card[5].x, card[5].y]
+            else:
+                if card[5].x != new_position[0]:
+
+                    if card[5].x > new_position[0]:
+                        card[5].x -= 1 # move card left slightly
+                        new_rect = [card[5].x, card[5].y]
+                    if card[5].x < new_position[0]:
+                        card[5].x += 1 # move card right slightly
+                        new_rect = [card[5].x, card[5].y]
+
+                if card[5].y != new_position[1]:
+
+                    if card[5].y > new_position[1]:
+                        card[5].y -= 1 # move card up slightly
+                        new_rect = [card[5].x, card[5].y]
+
+                    if card[5].y < new_position[1]:
+                        card[5].y += 1 # move card down slightly
+                        new_rect = [card[5].x, card[5].y]
             i += 1
         # Find and replace old_pos in objects we want to display with the new position
         # change positions of objects on screen
@@ -109,7 +129,7 @@ class Animations:
             player_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos2 = [300, 650]
+                pos2 = [300, 700]
                 print("default", str(pos2))
                 pos2[0] += player_left_padding
                 print("padded", str(pos2))

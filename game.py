@@ -255,6 +255,7 @@ class Game:
         self.battling = False
         self.sorting_cards = False
         self.selected_card = None
+        self.card_selected_rect = None
         for cardd in self.player_cards:
             cardd[9] = False
             cardd[11] = None # Disable all events for this card
@@ -355,14 +356,25 @@ class Game:
                                 self.player_cards[i][6] = False # collision check
                                 # If there is no card selected, then move it back to starting position
                                 if self.card_selected is False:
-                                    # If current position of card is not the same as the starting position of the card, then move back to starting position
-                                    if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y] and self.player_cards[i][13] is False:
-                                        if self.move_back_disabled is False:
-                                            self.colliding = False
-                                            pygame.event.post(self.move_to_starting_pos_event)
-                                            new_event = self.move_to_starting_pos_event
-                                            # Set the newly posted event as the cards' controlling event
-                                            self.player_cards[i][11] = new_event     
+                                    if self.turn_count == 1:
+                                        # If current position of card is not the same as the starting position of the card, then move back to starting position
+                                        if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y] and self.player_cards[i][13] is False:
+                                            if self.move_back_disabled is False: # Check that moving back is disabled 
+                                                self.colliding = False
+                                                pygame.event.post(self.move_to_starting_pos_event)
+                                                new_event = self.move_to_starting_pos_event
+                                                # Set the newly posted event as the cards' controlling event
+                                                self.player_cards[i][11] = new_event    
+                                    else:
+                                        # If current position of card is not the same as the new position of the card, then move back to new position
+                                        if self.player_cards[i][5].x != self.new_positions[0][i][0] and self.player_cards[i][5].y != self.new_positions[0][i][1] and self.player_cards[i][13] is False:
+                                            print("NEW POS MOVE BACK")
+                                            if self.move_back_disabled is False: # Check that moving back is disabled 
+                                                self.colliding = False
+                                                pygame.event.post(self.move_to_starting_pos_event)
+                                                new_event = self.move_to_starting_pos_event
+                                                # Set the newly posted event as the cards' controlling event
+                                                self.player_cards[i][11] = new_event    
                                 else:   
                                     self.colliding = False
                                     if self.player_cards[i][14] != 0:
@@ -426,7 +438,6 @@ class Game:
                 if self.turn == "PC":
                     # Not yet battling
                     if self.battling is False:
-                        pygame.time.delay(3000) # Wait a couple seconds to not be jarring
                         self.card_selected = False # Reset this since there can't be any cards selected
                         i = 0
                         xtra_points = [] # AI token system (list), tries to battle cards which give it more points
@@ -573,6 +584,7 @@ class Game:
                 # if card hovering called and still should be animating this card
                 if event.type == self.move_to_starting_pos_e:
                     print("Moving back")
+                    i = 0
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_starting_pos_event:
@@ -580,8 +592,15 @@ class Game:
                                 # Disable event
                                 cardd[12] = 0
                             else:
-                                animations.Animations.move_to_starting_pos(self, cardd)
-                                cardd[12] += 1
+                                if self.turn_count == 1:
+                                    # False is if the current turn is the first turn
+                                    animations.Animations.move_to_starting_pos(self, cardd, True, None)
+                                    cardd[12] += 1
+                                else:
+                                    # Not the first turn, so set first_turn to False
+                                    animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
+                                    cardd[12] += 1
+                        i += 1
                 # Select a card
                 if event.type == self.select_e and self.card_selected is True:
                     print("Selecting card")
@@ -631,8 +650,6 @@ class Game:
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
                                 print("DISABLE Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
-                                if cardd == self.selected_card:
-                                    pygame.time.delay(3000)
                                 cardd[12] = 5
                                 player_cards_reached_pos_count += 1
                             else:
@@ -667,7 +684,6 @@ class Game:
                         # END TURN
                         self.turn = self.next_turn
                         self.display_turn = True
-                        pygame.time.delay(1000)
                         self.turn_count += 1
                         Game.new_turn(self) # Show turn cahnge animation
                    
@@ -831,12 +847,6 @@ class Game:
                                     cardd[12] = 1
                                     self.selected_card[12] = 1
                                     animations.Animations.card_battle(self, cardd, self.selected_card, self.selected_card)
-                # Check if any cards have been deleted, then disable battle mode
-                if self.selected_card is None or self.battled_pc_card is None:
-                    print("Does this")
-                    self.battling = False
-                    self.card_selected = False
-                    self.move_back_disabled = True
               
                 # Mouse button down (could be any)
                 if event.type == pygame.MOUSEBUTTONDOWN: 
