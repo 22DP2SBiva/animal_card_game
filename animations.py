@@ -28,7 +28,8 @@ class Animations:
             # change positions of objects on screen
             # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
             i += 1
-        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+        displayy = display.Display
+        displayy.modify_objects_to_display(self, start_rect, new_rect, False)
     def move_to_starting_pos(self, card, turn_1, new_position):
         i = 0
         start_rect = [card[5].x, card[5].y]

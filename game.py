@@ -29,9 +29,12 @@ CARD_SPACING = 160
 player_last_card_pos = [0,0] # position of last card in player deck
 pc_last_card_pos = [0,0] # position of last card in pc deck
 running = True # for checking if game should be running
+card_obj = card.Card # import card object
+
 # Objects that should be displayed on the screen
 class Game:
     objects_to_display = [] # image(surface), position(list)
+    
     def __init__(self):
         pygame.init()
         pygame.font.init()
@@ -83,7 +86,7 @@ class Game:
         self.battled_pc_card = "Brr"
         self.move_back_disabled = False
         self.new_positions = [] # If there are any new positions that cards should be moved to, they will be stored in this list
-        self.starting_card_amount = 6 # first round card amount to deal to each player
+        self.max_card_amount = 6 # first round card amount to deal to each player
         self.debug_mode = False # For debugging (shows all rects)
         self.card_to_collide = None
         # How many live left each player has
@@ -144,6 +147,7 @@ class Game:
             x = 100
         
         while(i < count_to_generate):
+            
             print("i: ", i)
             # Generate card (Name, Tier, Image directory, Ability)
             
@@ -153,108 +157,112 @@ class Game:
                 self.player_sub_list.clear()
                 self.pc_sub_list.clear()
             card_sublist = card.Card.generate_card(self)
-            # generate a card, add it to player deck
-            for item in card_sublist:
-                self.player_sub_list.append(item)
-            # generate a card, add it to pc deck
-            card_sublist = card.Card.generate_card(self)
-            for item in card_sublist:
-                self.pc_sub_list.append(item)
-            
-            # PLAYER CARDS
-            # load/transform card image
-            self.player_sub_list[3] = pygame.image.load(self.player_sub_list[2]) # Loads image
-            self.player_sub_list[3].convert_alpha() # Removes transparent bits from image
-            self.player_sub_list[3] = pygame.transform.scale(self.player_sub_list[3], (800,700)) # Scales image to fit
+            if len(self.player_cards) < self.max_card_amount:
+                # generate a card, add it to player deck
+                for item in card_sublist:
+                    self.player_sub_list.append(item)
+            if len(self.pc_cards) < self.max_card_amount:
+                # generate a card, add it to pc deck
+                card_sublist = card.Card.generate_card(self)
+                for item in card_sublist:
+                    self.pc_sub_list.append(item)
+            if len(self.player_cards) < self.max_card_amount:
+                # PLAYER CARDS
+                # load/transform card image
+                self.player_sub_list[3] = pygame.image.load(self.player_sub_list[2]) # Loads image
+                self.player_sub_list[3].convert_alpha() # Removes transparent bits from image
+                self.player_sub_list[3] = pygame.transform.scale(self.player_sub_list[3], (800,700)) # Scales image to fit
 
-            # base cards
-            self.player_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
-            self.player_sub_list[4] = pygame.transform.scale(self.player_sub_list[4], (800,700))
-            # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-            self.player_sub_list.append(pygame.Rect(player_pos[0] + x, player_pos[1], 150, 300)) # start button collsion rect index [5]
-            # Add collision check bool
-            self.player_sub_list.append(False) # always at start
-            # Revealed bool (used for checking if player can currently see waht card it is)
-            self.player_sub_list.append(False)
-            # add position for further refrencing
-            self.player_sub_list.append([player_pos[0] + x, player_pos[1]])
-            # animation: is the card curretnly being animated?
-            self.player_sub_list.append(False)
-            # Color for debug mode
-            self.player_sub_list.append(WHITE)
-             # Currently activate event for this card
-            self.player_sub_list.append(None)
-            # Animation frames played in total
-            self.player_sub_list.append(0)
-            # Can the card move back?
-            self.player_sub_list.append(False)
-            # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
-            self.player_sub_list.append(0)
+                # base cards
+                self.player_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
+                self.player_sub_list[4] = pygame.transform.scale(self.player_sub_list[4], (800,700))
+                # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
+                self.player_sub_list.append(pygame.Rect(player_pos[0] + x, player_pos[1], 150, 300)) # start button collsion rect index [5]
+                # Add collision check bool
+                self.player_sub_list.append(False) # always at start
+                # Revealed bool (used for checking if player can currently see waht card it is)
+                self.player_sub_list.append(False)
+                # add position for further refrencing
+                self.player_sub_list.append([player_pos[0] + x, player_pos[1]])
+                # animation: is the card curretnly being animated?
+                self.player_sub_list.append(False)
+                # Color for debug mode
+                self.player_sub_list.append(WHITE)
+                # Currently activate event for this card
+                self.player_sub_list.append(None)
+                # Animation frames played in total
+                self.player_sub_list.append(0)
+                # Can the card move back?
+                self.player_sub_list.append(False)
+                # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
+                self.player_sub_list.append(0)
 
-            # Store objects which need to be displayed to the screen
-            # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
-            self.objects_to_display.append([self.player_sub_list[4], self.player_sub_list[8], False])
-            self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8], False])
+                # Store objects which need to be displayed to the screen
+                # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
+                self.objects_to_display.append([self.player_sub_list[4], self.player_sub_list[8], False])
+                self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8], False])
+            if len(self.pc_cards) < self.max_card_amount:
+                print(len(self.pc_cards))
+                # PC CARDS
+                
+                # load card image
+                self.pc_sub_list[3] = pygame.image.load(self.pc_sub_list[2])
+                self.pc_sub_list[3].convert_alpha()
+                self.pc_sub_list[3] = pygame.transform.scale(self.pc_sub_list[3], (800,700))
+                # base cards
+                self.pc_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
+                self.pc_sub_list[4] = pygame.transform.scale(self.pc_sub_list[4], (800,700))
 
-            # PC CARDS
-            
-            # load card image
-            self.pc_sub_list[3] = pygame.image.load(self.pc_sub_list[2])
-            self.pc_sub_list[3].convert_alpha()
-            self.pc_sub_list[3] = pygame.transform.scale(self.pc_sub_list[3], (800,700))
-            # base cards
-            self.pc_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
-            self.pc_sub_list[4] = pygame.transform.scale(self.pc_sub_list[4], (800,700))
+                # Collision rects and checks
 
-            # Collision rects and checks
-
-            # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-            self.pc_sub_list.append(pygame.Rect(pc_pos[0] + x, pc_pos[1], 150, 300)) # start button collsion rect index [5]
-            # Add collision check bool
-            self.pc_sub_list.append(False) # check if cursor is over rect (start button) index [6]
-            # Revealed bool (used for checking if player can currently see waht card it is)
-            self.pc_sub_list.append(False) # always at start
-            # add position for further refrencing
-            self.pc_sub_list.append([pc_pos[0] + x, pc_pos[1]])
-            # animation: is the card curretnly being animated?
-            self.pc_sub_list.append(False)
-            # Color for debug mode
-            self.pc_sub_list.append(WHITE)
-            # Currently activate event for this card
-            self.pc_sub_list.append(None)
-            # Animation frames played in total
-            self.pc_sub_list.append(0)
-            # Can the card move back?
-            self.pc_sub_list.append(False)
-            # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
-            self.pc_sub_list.append(0)
-            
-            # Store objects which need to be displayed to the screen
-            self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8], False])
-            self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8], False])
-
-            # append all items in player_sub_list to new empty list ath end of main player_cards list
-            self.player_cards.append([])
-            new_list = len(self.player_cards) - 1
-            y = 0 # for getting rect position
-            for item in self.player_sub_list:
-                self.player_cards[new_list].append(item)
-                # Saving positions of last cards to use in next turns
-                if y == 5: # If were at the index the rect should be at, then set last pos to this sublsit value
-                    player_last_card_pos[0] = self.player_sub_list[y][0]
-                    player_last_card_pos[1] = self.player_sub_list[y][1]
-                y += 1
-            # append all items in pc_sub_list to main pc_cards list
-            self.pc_cards.append([])
-            new_list = len(self.pc_cards) - 1
-            y = 0 # for getting rect position
-            for item in self.pc_sub_list:
-                self.pc_cards[new_list].append(item)
-                # Saving positions of last cards to use in next turns
-                if y == 5: # If were at the index the rect should be at, then set last pos to this sublsit value
-                    pc_last_card_pos[0] = self.pc_sub_list[y][0]
-                    pc_last_card_pos[1] = self.pc_sub_list[y][1]
-                y += 1
+                # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
+                self.pc_sub_list.append(pygame.Rect(pc_pos[0] + x, pc_pos[1], 150, 300)) # start button collsion rect index [5]
+                # Add collision check bool
+                self.pc_sub_list.append(False) # check if cursor is over rect (start button) index [6]
+                # Revealed bool (used for checking if player can currently see waht card it is)
+                self.pc_sub_list.append(False) # always at start
+                # add position for further refrencing
+                self.pc_sub_list.append([pc_pos[0] + x, pc_pos[1]])
+                # animation: is the card curretnly being animated?
+                self.pc_sub_list.append(False)
+                # Color for debug mode
+                self.pc_sub_list.append(WHITE)
+                # Currently activate event for this card
+                self.pc_sub_list.append(None)
+                # Animation frames played in total
+                self.pc_sub_list.append(0)
+                # Can the card move back?
+                self.pc_sub_list.append(False)
+                # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
+                self.pc_sub_list.append(0)
+                
+                # Store objects which need to be displayed to the screen
+                self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8], False])
+                self.objects_to_display.append([self.pc_sub_list[3], self.pc_sub_list[8], False])
+            if len(self.player_cards) < self.max_card_amount:
+                # append all items in player_sub_list to new empty list ath end of main player_cards list
+                self.player_cards.append([])
+                new_list = len(self.player_cards) - 1
+                y = 0 # for getting rect position
+                for item in self.player_sub_list:
+                    self.player_cards[new_list].append(item)
+                    # Saving positions of last cards to use in next turns
+                    if y == 5: # If were at the index the rect should be at, then set last pos to this sublsit value
+                        player_last_card_pos[0] = self.player_sub_list[y][0]
+                        player_last_card_pos[1] = self.player_sub_list[y][1]
+                    y += 1
+            if len(self.pc_cards) < self.max_card_amount:
+                # append all items in pc_sub_list to main pc_cards list
+                self.pc_cards.append([])
+                new_list = len(self.pc_cards) - 1
+                y = 0 # for getting rect position
+                for item in self.pc_sub_list:
+                    self.pc_cards[new_list].append(item)
+                    # Saving positions of last cards to use in next turns
+                    if y == 5: # If were at the index the rect should be at, then set last pos to this sublsit value
+                        pc_last_card_pos[0] = self.pc_sub_list[y][0]
+                        pc_last_card_pos[1] = self.pc_sub_list[y][1]
+                    y += 1
             i += 1
             x += CARD_SPACING
         self.generated_cards = True
@@ -280,6 +288,46 @@ class Game:
         self.title_text = self.title_font.render('Loss!', True, (0, 0, 0))
         self.screen.blit(self.title_text, (750,400))
         # Add Try Again button
+    def tier_up_cards(self):
+        global card_obj
+        new_player_card = None
+        new_pc_card = None
+        # Replace not top tier cards in original list with next tier card (new cards)
+        i = 0
+        for cardd in self.player_cards:
+            if cardd[1] != 4:
+                new_card = card_obj.generate_higher_tier_card(self, cardd[1])
+                print("player cards", str(self.player_cards[i]))
+                self.player_cards[i][0] = new_card[0]
+                self.player_cards[i][1] = new_card[1]
+                self.player_cards[i][2] = new_card[2]
+                print("NEW player cards", str(self.player_cards[i]))
+                new_player_card = [self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False]
+                
+            i += 1
+        i = 0
+        for cardd in self.pc_cards:
+            if cardd[1] != 4:
+                new_card = card_obj.generate_higher_tier_card(self, cardd[1])
+                self.pc_cards[i][0] = new_card[0]
+                self.pc_cards[i][1] = new_card[1]
+                self.pc_cards[i][2] = new_card[2]
+                new_pc_card = [self.pc_cards[i][3], [self.pc_cards[i][5].x, self.pc_cards[i][5].y], False]
+                
+            i += 1
+        i = 0
+        for cardd in self.objects_to_display:
+            print("new pc card", new_pc_card)
+            if new_pc_card is not None and cardd == new_pc_card:
+                print("yes there is new PC card")
+                self.objects_to_display[i] = new_pc_card
+            if new_player_card is not None and cardd == new_player_card:
+                self.objects_to_display[i] = new_player_card
+                print("yes there is new PLAYER card")
+            i += 1
+        
+            
+
     def new_turn(self):
         self.screen.fill(WHITE)
         self.turn_font = pygame.font.SysFont('Arial', 80)
@@ -287,6 +335,8 @@ class Game:
         self.screen.blit(self.turn_text, (750,400))
         self.turn_num_text = self.turn_font.render(str(self.turn_count), True, (0, 0, 0))
         self.screen.blit(self.turn_num_text, (900,600))
+        # Tier up cards
+        Game.tier_up_cards(self)
         # UPDATE SCREEN
         pygame.display.update()
         self.clock.tick(60)
@@ -465,7 +515,7 @@ class Game:
                     # First turn
                     if self.turn_count == 1 and self.generated_cards == False: # First round and cards have not yet beet generated
                         # PS: self represents instance of the class Game
-                        self.generate_cards(self.starting_card_amount) # Generate deck of card for both player and pc
+                        self.generate_cards(self.max_card_amount) # Generate deck of card for both player and pc
                         self.loading = False # Turn off loading screen
                     # Not first turn
                     elif self.turn_count > 1 and self.added_new_cards == False: # Checks if not first turn and havent already added new cards to each deck

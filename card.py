@@ -28,4 +28,8 @@ class Card:
         # * symbol before zip and card_chances unpacks the variable. example: [1,2,3] becomes 1,2,3
         card = random.choices(*zip(*card_chances))[0]
         return card
+    def generate_higher_tier_card(self, card_tier):
+        for card in cards:
+            if card[1] > card_tier:
+                return card
     
