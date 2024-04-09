@@ -278,6 +278,29 @@ class Game:
 
         self.screen.blit(self.options_button, (700,500))
         self.screen.blit(self.exit_button, (700,700))
+    def options_screen(self):
+        self.screen.fill(WHITE)
+        self.close_button = pygame.image.load("Assets/close_button.png").convert_alpha()
+        self.max_card_amount_text = self.title_font.render('Max card amount: ', True, (0, 0, 0))
+        self.new_cards_each_round_text = self.title_font.render('New cards each round: ', True, (0, 0, 0))
+        self.title_text = self.title_font.render('Options', True, (0, 0, 0))
+        # Text input system
+        self.input_rect_max_card = pygame.Rect(710, 500, 200, 150) 
+        self.collide_input_max_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect 
+        self.input_rect_new_card = pygame.Rect(710, 500, 200, 150) 
+        self.collide_input_new_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect 
+
+        self.screen.blit(self.close_button, (700,700))
+    def account_screen(self):
+        self.screen.fill(WHITE)
+        self.title_text = self.title_font.render('Account', True, (0, 0, 0))
+        self.screen.blit(self.title_text, (750,200))
+        self.screen.blit(self.start_button, (700,300))
+        self.start_rect = pygame.Rect(750, 300, 200, 150) # start button collsion rect
+        self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+
+        self.screen.blit(self.options_button, (700,500))
+        self.screen.blit(self.exit_button, (700,700))
     def win_screen(self):
         self.screen.fill(WHITE)
         self.title_text = self.title_font.render('Win!', True, (0, 0, 0))
@@ -290,42 +313,57 @@ class Game:
         # Add Try Again button
     def tier_up_cards(self):
         global card_obj
-        new_player_card = None
-        new_pc_card = None
+        new_player_card = []
+        new_pc_card = []
+        old_player_card = []
+        old_pc_card = []
         # Replace not top tier cards in original list with next tier card (new cards)
         i = 0
         for cardd in self.player_cards:
             if cardd[1] != 4:
                 new_card = card_obj.generate_higher_tier_card(self, cardd[1])
                 print("player cards", str(self.player_cards[i]))
+                old_player_card.append([self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False])
                 self.player_cards[i][0] = new_card[0]
                 self.player_cards[i][1] = new_card[1]
                 self.player_cards[i][2] = new_card[2]
+                # convert/scale card image
+                self.player_cards[i][3] = pygame.image.load(new_card[2])
+                self.player_cards[i][3].convert_alpha()
+                self.player_cards[i][3] = pygame.transform.scale(self.player_cards[i][3], (800,700))
                 print("NEW player cards", str(self.player_cards[i]))
-                new_player_card = [self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False]
+                new_player_card.append([self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False])
                 
             i += 1
         i = 0
         for cardd in self.pc_cards:
             if cardd[1] != 4:
                 new_card = card_obj.generate_higher_tier_card(self, cardd[1])
+                old_pc_card.append([self.pc_cards[i][3], [self.pc_cards[i][5].x, self.pc_cards[i][5].y], False])
                 self.pc_cards[i][0] = new_card[0]
                 self.pc_cards[i][1] = new_card[1]
                 self.pc_cards[i][2] = new_card[2]
-                new_pc_card = [self.pc_cards[i][3], [self.pc_cards[i][5].x, self.pc_cards[i][5].y], False]
+                # convert/scale card image
+                self.pc_cards[i][3] = pygame.image.load(new_card[2])
+                self.pc_cards[i][3].convert_alpha()
+                self.pc_cards[i][3] = pygame.transform.scale(self.pc_cards[i][3], (800,700))
+                new_pc_card.append([self.pc_cards[i][3], [self.pc_cards[i][5].x, self.pc_cards[i][5].y], False])
                 
             i += 1
         i = 0
-        for cardd in self.objects_to_display:
-            print("new pc card", new_pc_card)
-            if new_pc_card is not None and cardd == new_pc_card:
-                print("yes there is new PC card")
-                self.objects_to_display[i] = new_pc_card
-            if new_player_card is not None and cardd == new_player_card:
-                self.objects_to_display[i] = new_player_card
-                print("yes there is new PLAYER card")
+        for cardd in old_player_card:
+            if cardd in self.objects_to_display:
+                index = self.objects_to_display.index(cardd)
+                self.objects_to_display[index] = new_player_card[i]
             i += 1
-        
+        i = 0
+        for cardd in old_pc_card:
+            if cardd in self.objects_to_display:
+                index = self.objects_to_display.index(cardd)
+                self.objects_to_display[index] = new_pc_card[i]
+            i += 1    
+                
+        print("last i", i)
             
 
     def new_turn(self):
