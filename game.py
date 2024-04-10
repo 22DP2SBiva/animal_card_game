@@ -101,6 +101,8 @@ class Game:
         self.next_turn = "PC" # Who's turn is it next?
         self.won = False
         self.lost = False
+        self.pc_battled_all_cards = False
+        self.player_battled_all_cards = False
         self.added_new_cards = False # Whether we have added new cards to each deck each turn
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
@@ -114,11 +116,11 @@ class Game:
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14                      15
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect)
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14                      15           16
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect, attacked)
         self.player_cards = []
-        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14                      15
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect)
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14                      15          16
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect, attacked)
         self.pc_cards = []
 
         # Tuples
@@ -196,6 +198,8 @@ class Game:
                 self.player_sub_list.append(False)
                 # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
                 self.player_sub_list.append(0)
+                # Has the card attacekd?
+                self.player_sub_list.append(False)
 
                 # Store objects which need to be displayed to the screen
                 # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
@@ -235,6 +239,8 @@ class Game:
                 self.pc_sub_list.append(False)
                 # Stores refrence to semi-transparent grey image used to display on top of the card, to signify it can't be selected
                 self.pc_sub_list.append(0)
+                # Has the card attacekd?
+                self.pc_sub_list.append(False)
                 
                 # Store objects which need to be displayed to the screen
                 self.objects_to_display.append([self.pc_sub_list[4], self.pc_sub_list[8], False])
@@ -311,6 +317,14 @@ class Game:
         self.title_text = self.title_font.render('Loss!', True, (0, 0, 0))
         self.screen.blit(self.title_text, (750,400))
         # Add Try Again button
+    def end_turn(self):
+        self.sorting_cards = False 
+        self.done_base_sort = False
+        # END TURN
+        self.turn = self.next_turn
+        self.display_turn = True
+        self.turn_count += 1
+        Game.new_turn(self) # Show turn change animation
     def tier_up_cards(self):
         global card_obj
         new_player_card = []
@@ -364,7 +378,26 @@ class Game:
             i += 1    
                 
         print("last i", i)
-            
+    def reset_card_values(self):
+        # Reset variables
+        self.battling = False
+        self.sorting_cards = False
+        self.selected_card = None
+        self.card_selected = False
+        self.card_selected_rect = None
+        self.card_to_collide = False
+        self.pc_battled_all_cards is False
+        self.player_battled_all_cards is False
+        for cardd in self.player_cards:
+            cardd[9] = False
+            cardd[11] = None # Disable all events for this card
+            cardd[12] = 0
+            cardd[13] = False
+        for cardd in self.pc_cards:
+            cardd[9] = False
+            cardd[11] = None # Disable all events for this card
+            cardd[12] = 0
+            cardd[13] = False
 
     def new_turn(self):
         self.screen.fill(WHITE)
@@ -391,11 +424,13 @@ class Game:
             cardd[11] = None # Disable all events for this card
             cardd[12] = 0
             cardd[13] = False
+            cardd[15] = False
         for cardd in self.pc_cards:
             cardd[9] = False
             cardd[11] = None # Disable all events for this card
             cardd[12] = 0
             cardd[13] = False
+            cardd[15] = False
         # Disable this animation
         self.display_turn = False
     def distance(self, x1, y1, x2, y2):
@@ -526,6 +561,8 @@ class Game:
                                     # Set the newly posted event as the cards' controlling event
                                     self.pc_cards[i][11] = new_event
                                     self.selected_card[11] = new_event # set player selected card to activate upon battle event
+                                    self.selected_card[15] = True # Is attacking, so True
+                                    self.player_cards[self.player_cards.index(self.selected_card)][15] = True # Is attacking, so True and set it to player cards too
                                 elif self.card_selected is False:
                                     print("CANT SELECT PC")
                                     # Card can't be interacted with, so turn grey
@@ -608,16 +645,22 @@ class Game:
                             # Set the newly posted event as the cards' controlling event
                             self.pc_cards[i][11] = new_event
                             self.selected_card[11] = new_event # set player selected card to activate upon battle event
+                            self.pc_cards[i][15] = True # This card has attacked, so True
                             if self.selected_card is not None:
                                 break
                             else:
                                 i += 1
                     else:
+                        for cardd in self.pc_cards:
+                            if cardd[15] is False:
+                                self.pc_battled_all_cards = True
+                            else:
+                                self.pc_battled_all_cards = False
                         # Battling and not yet deafeated other card
                         if self.selected_card is not None:
                             pygame.event.post(self.battle_event)
                         # Has defeated other card
-                        else:
+                        elif self.selected_card is None and self.pc_battled_all_cards is False:
                             # Sort cards
                             print("Sorts cards")
                             self.next_turn = "PLAYER"
@@ -632,7 +675,7 @@ class Game:
                             if not self.battling: # Check if card in battle mode
                                 # Selecting card when it is hovered over
                                 if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False:
-                                    if self.pressing:
+                                    if self.pressing and cardd[15] is False:
                                         print("Selected 1")
                                         cardd[12] = 0
                                         cardd[13] = True
@@ -813,15 +856,23 @@ class Game:
                                 cardd[12] = 1
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[1][i])
                             i += 1
-                    # Checks if all cards have reached the end destination, then end turn
+                    # Checks if all cards have reached the end destination (and all cards for this turn have battled), then end turn
                     if player_cards_reached_pos_count == len(self.player_cards) and pc_cards_reached_pos_count == len(self.pc_cards):
-                        self.sorting_cards = False 
-                        self.done_base_sort = False
-                        # END TURN
-                        self.turn = self.next_turn
-                        self.display_turn = True
-                        self.turn_count += 1
-                        Game.new_turn(self) # Show turn cahnge animation
+                        # All cards have battled this turn, so end turn
+                        if self.turn is "PLAYER":
+                            if self.player_battled_all_cards is True:
+                                Game.end_turn(self)
+                            else:
+                                # Hasn't battled all cards yet, so we continue turn and reset values
+                                Game.reset_card_values(self)
+
+                        # All cards have battled this turn, so end turn
+                        elif self.turn is "PC":
+                            if self.pc_battled_all_cards is True:
+                                Game.end_turn(self)
+                            else:
+                                # Hasn't battled all cards yet, so we continue turn and reset values
+                                Game.reset_card_values(self)
                    
                 if self.turn is "PLAYER":
                     # Display un-selectable cards
@@ -998,16 +1049,21 @@ class Game:
                             self.play_screen_active = True
                         # Cards have already been generated and collisiosn have been checked earlier
                         if self.generated_cards and self.collisions_checked:
+                            print("Yes")
                             # PLAYER
                             i = 0
                             while i < len(self.player_cards):
+                                print("Yessss")
                                 # Cursor colliding with player card 
                                 if self.p_colliding_with_card[i] is True and self.card_selected and self.card_to_collide != self.card_selected_rect:
+                                    print("Yesssssssssssss")
                                     # No card selected yet, Select card and place on board
                                     if self.card_selected is False:
+                                        print("Yesssssssssssssssssssssssssssssssssssssssssssssssss")
                                         pygame.event.post(self.select_event)
                                     # Card already selected, 'No.' animation plays
                                     else:
+                                        print("Noooooooooo")
                                         if self.card_selected_rect == self.card_to_collide:
                                             # Cant select same card again
                                             pygame.event.post(self.cant_select_event)
