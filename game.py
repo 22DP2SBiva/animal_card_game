@@ -101,8 +101,9 @@ class Game:
         self.next_turn = "PC" # Who's turn is it next?
         self.won = False
         self.lost = False
-        self.pc_battled_all_cards = False
-        self.player_battled_all_cards = False
+        self.pc_battled_all_cards_count = 0
+        self.player_battled_all_cards_count = 0
+        self.no_cards_attacked_yet = True
         self.added_new_cards = False # Whether we have added new cards to each deck each turn
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
@@ -386,8 +387,8 @@ class Game:
         self.card_selected = False
         self.card_selected_rect = None
         self.card_to_collide = False
-        self.pc_battled_all_cards is False
-        self.player_battled_all_cards is False
+        self.pc_battled_all_cards_count = 0
+        self.player_battled_all_cards_count = 0
         for cardd in self.player_cards:
             cardd[9] = False
             cardd[11] = None # Disable all events for this card
@@ -562,6 +563,7 @@ class Game:
                                     self.pc_cards[i][11] = new_event
                                     self.selected_card[11] = new_event # set player selected card to activate upon battle event
                                     self.selected_card[15] = True # Is attacking, so True
+                                    self.no_cards_attacked_yet = False
                                     self.player_cards[self.player_cards.index(self.selected_card)][15] = True # Is attacking, so True and set it to player cards too
                                 elif self.card_selected is False:
                                     print("CANT SELECT PC")
@@ -609,6 +611,7 @@ class Game:
                     display.Display.debug_draw_rects(self)
                 # PC BATTLE AI
                 if self.turn == "PC":
+                    self.player_battled_all_cards_count = 0 # Reset value
                     # Not yet battling
                     if self.battling is False:
                         self.card_selected = False # Reset this since there can't be any cards selected
@@ -646,36 +649,36 @@ class Game:
                             self.pc_cards[i][11] = new_event
                             self.selected_card[11] = new_event # set player selected card to activate upon battle event
                             self.pc_cards[i][15] = True # This card has attacked, so True
+                            self.no_cards_attacked_yet = False
                             if self.selected_card is not None:
                                 break
                             else:
                                 i += 1
                     else:
                         for cardd in self.pc_cards:
-                            if cardd[15] is False:
-                                self.pc_battled_all_cards = True
+                            if cardd[15] is True:
+                                self.pc_battled_all_cards_count += 1
                             else:
-                                self.pc_battled_all_cards = False
+                                self.pc_battled_all_cards_count = 0
                         # Battling and not yet deafeated other card
                         if self.selected_card is not None:
                             pygame.event.post(self.battle_event)
                         # Has defeated other card
-                        elif self.selected_card is None and self.pc_battled_all_cards is False:
+                        elif self.selected_card is None and self.pc_battled_all_cards_count == 0:
                             # Sort cards
                             print("Sorts cards")
                             self.next_turn = "PLAYER"
                             Game.sort_cards(self, self.objects_to_display)
-
-
-
+                # PLAYER
                 elif self.turn == "PLAYER":
+                    self.player_battled_all_cards_count = 0 # Reset value
                     # Collision and animation checks (if generated cards)
                     if self.generated_cards and self.card_to_collide is not None:
                         for cardd in self.player_cards:
                             if not self.battling: # Check if card in battle mode
                                 # Selecting card when it is hovered over
-                                if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False:
-                                    if self.pressing and cardd[15] is False:
+                                if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False and cardd[15] is False:
+                                    if self.pressing:
                                         print("Selected 1")
                                         cardd[12] = 0
                                         cardd[13] = True
@@ -686,7 +689,7 @@ class Game:
                                         pygame.event.post(self.select_event)
                                         cardd[11] = self.select_event
                                 # Move selected card when it is NOT hovered over
-                                elif cardd[6] is True and cardd[12] != self.run_count and self.card_selected is True:
+                                elif cardd[6] is True and cardd[12] != self.run_count and self.card_selected is True and cardd[15] is False:
                                     if cardd[5] == self.card_selected_rect:
                                         print("Selected 1.2")
                                         cardd[12] = 0
@@ -698,10 +701,10 @@ class Game:
                                         pygame.event.post(self.select_event)
                                         cardd[11] = self.select_event
                                 # Hovering over card and not completed animation
-                                elif cardd[6] is True and cardd[12] < self.run_count:
+                                elif cardd[6] is True and cardd[12] < self.run_count and cardd[15] is False:
                                     # Is the mouse being held down?
                                     # we are checking if the mouse left click is being pressed and if the currently selected card is not the same as the card being hovered over
-                                    if self.pressing and self.card_selected is False or self.card_selected and self.card_selected is False:
+                                    if self.pressing and self.card_selected is False:
                                         print("Selected 2")
                                         cardd[12] = 0
                                         cardd[13] = True
@@ -716,7 +719,7 @@ class Game:
                                         pygame.event.post(self.hover_event)
                                         cardd[11] = self.hover_event
                                 # If the card is not colliding with anything and the card selected is not the same as the current indexed card rect, then move card back to starting position
-                                elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False and self.colliding_pc is False:
+                                elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False and self.colliding_pc is False and cardd[15] is False:
                                     if self.move_back_disabled is False:
                                         print("Move back to starting position")
                                         # [11] is the current event, we are assigning the new event to it
@@ -734,6 +737,11 @@ class Game:
 
                                         pygame.event.post(self.select_event)
                                         cardd[11] = self.select_event
+                            if cardd[15] is True:
+                                self.player_battled_all_cards_count += 1
+                                print("is true: ", self.player_battled_all_cards_count)
+                            else:
+                                self.player_battled_all_cards_count = 0
                 # BATTLING CHECK
                 if self.battling:
                     pygame.event.post(self.battle_event)
@@ -771,8 +779,9 @@ class Game:
                                 # Disable event
                                 cardd[12] = 0
                             else:
-                                if self.turn_count == 1:
-                                    # False is if the current turn is the first turn
+                                # If no cards have attacked yet, then no positions should be changed
+                                if self.no_cards_attacked_yet:
+                                    # True is if the current turn is the first turn
                                     animations.Animations.move_to_starting_pos(self, cardd, True, None)
                                     cardd[12] += 1
                                 else:
@@ -860,19 +869,23 @@ class Game:
                     if player_cards_reached_pos_count == len(self.player_cards) and pc_cards_reached_pos_count == len(self.pc_cards):
                         # All cards have battled this turn, so end turn
                         if self.turn is "PLAYER":
-                            if self.player_battled_all_cards is True:
+                            print(self.player_battled_all_cards_count)
+                            print(len(self.player_cards))
+                            if self.player_battled_all_cards_count == len(self.player_cards):
                                 Game.end_turn(self)
                             else:
                                 # Hasn't battled all cards yet, so we continue turn and reset values
                                 Game.reset_card_values(self)
+                                print("restet player")
 
                         # All cards have battled this turn, so end turn
                         elif self.turn is "PC":
-                            if self.pc_battled_all_cards is True:
+                            if self.pc_battled_all_cards_count == len(self.pc_cards):
                                 Game.end_turn(self)
                             else:
                                 # Hasn't battled all cards yet, so we continue turn and reset values
                                 Game.reset_card_values(self)
+                                print("restet pc")
                    
                 if self.turn is "PLAYER":
                     # Display un-selectable cards

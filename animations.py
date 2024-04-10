@@ -30,7 +30,7 @@ class Animations:
             i += 1
         displayy = display.Display
         displayy.modify_objects_to_display(self, start_rect, new_rect, False)
-    def move_to_starting_pos(self, card, turn_1, new_position):
+    def move_to_starting_pos(self, card, no_cards_have_attacked_yet, new_position):
         i = 0
         start_rect = [card[5].x, card[5].y]
         while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
@@ -38,7 +38,7 @@ class Animations:
             # Checks if card current position X is the same as the starting position X
             new_rect = [card[5].x, card[5].y]
             # Checks x and y positions of card and desired position, then moves it accordingly
-            if turn_1:
+            if no_cards_have_attacked_yet:
                 if card[5].x != card[8][0]:
 
                     if card[5].x > card[8][0]:
