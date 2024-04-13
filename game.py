@@ -1,11 +1,12 @@
 import sys
+import math
+import random
 import pygame
 import card
 import collisions
 import animations
 import display
 import battle_logic
-import math
 # Constants
 WIDTH, HEIGHT = 1920, 1080
 FPS = 60
@@ -93,6 +94,7 @@ class Game:
         self.player_lives = 5
         self.pc_lives = 5
         self.turn_count = 1 # What turn it is numerically?
+        self.pc_attacked = set()  # Set to track PC cards that have already attacked
         self.card_selected = False # If a PLAYER card is currently selected to fight, then True
         self.card_selected_rect = None # Currently selected PLAYER card's rect
         self.selected_card = "Brr"# Currently selected PLAYER card
@@ -132,6 +134,7 @@ class Game:
         self.start_button = pygame.image.load("Assets/start_button.png").convert_alpha()
         self.options_button = pygame.image.load("Assets/options_button.png").convert_alpha()
         self.exit_button = pygame.image.load("Assets/exit_button.png").convert_alpha()
+        self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
     def generate_cards(self, count_to_generate):
         global player_last_card_pos
         global pc_last_card_pos
@@ -319,6 +322,10 @@ class Game:
         self.screen.blit(self.title_text, (750,400))
         # Add Try Again button
     def end_turn(self):
+        if self.turn == "PC":
+            self.next_turn = "PLAYER"
+        elif self.turn == "PLAYER":
+            self.next_turn = "PC"
         self.sorting_cards = False 
         self.done_base_sort = False
         # END TURN
@@ -589,6 +596,10 @@ class Game:
                 # PLAY
                 elif self.play_screen_active:
                     self.screen.fill(WHITE)
+                    # End turn button
+                    self.screen.blit(self.end_turn_button, (150,800))
+                    self.end_turn_button_rect = pygame.Rect(150, 800, 200, 150) # end turn collsion rect
+                    self.collide_end_turn_button = self.end_turn_button_rect.collidepoint(self.pos) # check if cursor is over rect (end turn button)
                     # First turn
                     if self.turn_count == 1 and self.generated_cards == False: # First round and cards have not yet beet generated
                         # PS: self represents instance of the class Game
@@ -598,6 +609,8 @@ class Game:
                     elif self.turn_count > 1 and self.added_new_cards == False: # Checks if not first turn and havent already added new cards to each deck
                         self.generate_cards(1) # Generate deck of card for both player and pc
                         self.loading = False
+                    elif self.turn_count > 1 and self.added_new_cards == True and self.sorting_cards == False:
+                        Game.sort_cards(self, self.objects_to_display) # sort cards before turn start for safety (in case a new card is added)
                 # WIN
                 elif self.win_screen_active:
                     return
@@ -614,46 +627,60 @@ class Game:
                     self.player_battled_all_cards_count = 0 # Reset value
                     # Not yet battling
                     if self.battling is False:
+                        premature_end_turn = False
+                        shouldnt_attack_card_count = 0
                         self.card_selected = False # Reset this since there can't be any cards selected
-                        i = 0
                         xtra_points = [] # AI token system (list), tries to battle cards which give it more points
-                        self.selected_card = None
-                        while i < len(self.pc_cards):
+                        self.selected_card = None # The card PC is going to battle
+                        # Checks each card to see which ones higher tier and which to attack
+                        # Also checks which pc cards have already been attacked, so that we cant attack with those again
+                        for pc_index, pc_card in enumerate(self.pc_cards):
+                            if pc_index not in self.pc_attacked:  # Check if PC card has already attacked
+                                for player_index, player_card in enumerate(self.player_cards):
+                                    tier_difference = pc_card[1] - player_card[1]
 
-                            # PC card tier is higher than play card tier for this card
-                            if self.pc_cards[i][1] > self.player_cards[i][1]:
-                                print("higher")
-                                xtra_points.append([3, self.player_cards[i]])
-                            # Same tier
-                            elif self.pc_cards[i][1] == self.player_cards[i][1]:
-                                print("same")
-                                xtra_points.append([2, self.player_cards[i]])
-                            # Lower tier
+                                    if tier_difference >= 0:  # Attack only lower tier or same tier cards
+                                        points = 3
+                                    else:
+                                        points = 0  # Skip attacking higher tier cards
+
+                                    xtra_points.append([points, pc_index, player_index])
+                        # Sort points by descending, so that PC attacks higher tier cards first and then lower tier, same etc.
+                        xtra_points.sort(key=lambda x: x[0], reverse=True)  
+
+                        # Randomly select a card to attack
+                        random.shuffle(xtra_points)
+                        for points, pc_index, player_index in xtra_points:
+                            if points > 0:  # If points > 0, it means the PC wants to attack
+                                self.selected_card = self.player_cards[player_index]
+                                self.pc_attacked.add(pc_index)  # Update set of attacked PC cards
+                            # This card shouldnt attack
                             else:
-                                print("lower")
-                                xtra_points.append([1, self.player_cards[i]])
-                            
-                            # Set card to battle according to current highest points/tier
-                            for sublist in xtra_points:
-                                if 3 in sublist:
-                                    self.selected_card = sublist[1]
-                                elif 2 in sublist and self.selected_card is None:
-                                    self.selected_card = sublist[1]
-                                elif 1 in sublist and self.selected_card is None:
-                                    self.selected_card = sublist[1]
-                            # Card can be selected, so start battle sequence
-                            self.battling = True
-                            pygame.event.post(self.battle_event)
-                            new_event = self.battle_event
-                            # Set the newly posted event as the cards' controlling event
-                            self.pc_cards[i][11] = new_event
-                            self.selected_card[11] = new_event # set player selected card to activate upon battle event
-                            self.pc_cards[i][15] = True # This card has attacked, so True
-                            self.no_cards_attacked_yet = False
-                            if self.selected_card is not None:
-                                break
-                            else:
-                                i += 1
+                                shouldnt_attack_card_count += 1
+
+                        # If none of the cards left should attack, then end turn
+                        if shouldnt_attack_card_count == len(self.pc_cards):
+                            premature_end_turn = True
+                        if (len(self.pc_attacked) - shouldnt_attack_card_count) == 0
+                        i = 0
+                        if premature_end_turn is False:
+                            while i < len(self.pc_cards):
+                                # Card can be selected, so start battle sequence
+                                self.battling = True
+                                pygame.event.post(self.battle_event)
+                                new_event = self.battle_event
+                                # Set the newly posted event as the cards' controlling event
+                                self.pc_cards[i][11] = new_event
+                                self.selected_card[11] = new_event # set player selected card to activate upon battle event
+                                self.pc_cards[i][15] = True # This card has attacked, so True
+                                self.no_cards_attacked_yet = False
+                                if self.selected_card is not None:
+                                    break
+                                else:
+                                    i += 1
+                        # Should end turn prematurely
+                        else:
+                            Game.end_turn(self)
                     else:
                         for cardd in self.pc_cards:
                             if cardd[15] is True:
@@ -664,10 +691,9 @@ class Game:
                         if self.selected_card is not None:
                             pygame.event.post(self.battle_event)
                         # Has defeated other card
-                        elif self.selected_card is None and self.pc_battled_all_cards_count == 0:
+                        elif self.selected_card is None and self.pc_battled_all_cards_count == 0 and premature_end_turn is False:
                             # Sort cards
                             print("Sorts cards")
-                            self.next_turn = "PLAYER"
                             Game.sort_cards(self, self.objects_to_display)
                 # PLAYER
                 elif self.turn == "PLAYER":
@@ -972,7 +998,6 @@ class Game:
                                         self.pc_lives -= 1
                                     # Sort cards
                                     print("Sorts cards")
-                                    self.next_turn = "PLAYER"
                                     
                                     Game.sort_cards(self, self.objects_to_display)
                                 else:
@@ -1040,7 +1065,6 @@ class Game:
                                         self.player_lives -= 1
                                     # Sort cards
                                     print("Sorts cards")
-                                    self.next_turn = "PC"
                                     
                                     Game.sort_cards(self, self.objects_to_display)
                                 else:
@@ -1062,7 +1086,10 @@ class Game:
                             self.play_screen_active = True
                         # Cards have already been generated and collisiosn have been checked earlier
                         if self.generated_cards and self.collisions_checked:
-                            print("Yes")
+                            # Cursor colliding with end turn button and clicking (Player wants to end their turn)
+                            if self.collide_end_turn_button:
+                                print("Colliding with end turn button")
+                                Game.end_turn(self)
                             # PLAYER
                             i = 0
                             while i < len(self.player_cards):
@@ -1083,33 +1110,41 @@ class Game:
                                 i += 1
                     # RIGHT CLICK
                     elif event.button == 3:
-                        self.pressing = True
-                        if self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
-                            # Selecting second card (for combining cards)
-                            # check if theyre the same type of card (Grasshopper for instance)
-                            if self.first_card_to_combine[1] is self.second_card_to_combine[1]:
+                        if self.colliding != False:
+                            self.pressing = True
+                            # Select first card
+                            if self.first_card_to_combine is None:
+                                self.first_card_to_combine = self.card_to_collide
                                 self.selected_card_count += 1
-                                # SELECT BOTH CARDS and COMBINE
-                            else:
+                            # Selecting same first card (BAD)
+                            elif self.first_card_to_combine is not None and self.card_to_collide == self.first_card_to_combine:
                                 pygame.event.post(self.cant_select_event)
-                        elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
-                            break
-                            # SHAKE CARD ANIMATION (CANT SELECT ANYMORE)
-                        # i = 0
-                        # while i < len(self.pc_cards): 
-                        #     # Cursor colliding with PC card
-                        #     if self.pc_colliding_with_card: # Tuple[bool, rect]
-                        #         # Player has selected a card and placed it on the board to fight
-                        #         if self.card_selected: # replace with player_cards[8?]
-                        #             # If card is already revealed [7], then you can battle it
-                        #             if self.pc_cards[7]:
-                        #                 break
-                        #             # Card is not yet revealed [7], can't battle it
-                        #             else:
-                        #                 break
+                            elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
+                                # Selecting second card (for combining cards)
+                                # check if theyre the same type of card (Grasshopper for instance)
+                                if self.first_card_to_combine[1] is self.second_card_to_combine[1]:
+                                    self.selected_card_count += 1
+                                    # SELECT BOTH CARDS and COMBINE
+                                else:
+                                    pygame.event.post(self.cant_select_event)
+                            elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
+                                break
+                                # SHAKE CARD ANIMATION (CANT SELECT ANYMORE)
+                            # i = 0
+                            # while i < len(self.pc_cards): 
+                            #     # Cursor colliding with PC card
+                            #     if self.pc_colliding_with_card: # Tuple[bool, rect]
+                            #         # Player has selected a card and placed it on the board to fight
+                            #         if self.card_selected: # replace with player_cards[8?]
+                            #             # If card is already revealed [7], then you can battle it
+                            #             if self.pc_cards[7]:
+                            #                 break
+                            #             # Card is not yet revealed [7], can't battle it
+                            #             else:
+                            #                 break
 
-                        #         else:
-                        #             break
+                            #         else:
+                            #             break
                         #     i += 1
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False

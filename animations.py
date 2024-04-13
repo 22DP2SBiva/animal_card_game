@@ -84,7 +84,7 @@ class Animations:
     #                         obj_to_display
     def sort_card_positions(self, cards, player_cards, pc_cards):
         # PC
-        pc_left_padding = 200
+        pc_left_padding = 500
         pc_spaces = 200
         new_card_positions_pc = []
         # Defines spacing ranges for pc cards
@@ -99,56 +99,37 @@ class Animations:
                 pc_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos1 = [300, 150]
-                #print("default", str(pos1))
-                pos1[0] += pc_left_padding
-                #print("padded", str(pos1))
+                pos1 = [500, 150]
+                pos1[0] += i * pc_left_padding  # Adjust the x-coordinate based on the index and left padding
                 new_card_positions_pc.append(pos1.copy())
             else:
-                # print(pc_cards)
-                # distance = math.sqrt((pos1[0] - cards[i][1][0])**2 + (pos1[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
-                # # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
-                # if distance > pc_spaces:
-                #     pos1[0] -= pc_spaces
-                #     print("n", str(pos1))
-                #     new_card_positions_pc.append(pos1.copy())
-                # else:
-                pos1[0] += pc_spaces
-                #print("n", str(pos1))
-                new_card_positions_pc.append(pos1.copy())
-            
+                prev_pos = new_card_positions_pc[i - 1]
+                new_pos = [prev_pos[0] + pc_spaces, prev_pos[1]]  # Increment x-coordinate by spaces
+                new_card_positions_pc.append(new_pos.copy())
             i += 1
         # PLAYER
-        player_left_padding = 200
+        player_left_padding = 500
         player_spaces = 200
         new_card_positions_player = []
         # Defines spacing ranges for pc cards
         i = 0
         # Times Two used because including base card positions
         while i < len(self.player_cards) * 2:
-            player_left_padding -= 20 # The more cards, the less padding there is from the left side of the screen
-            player_spaces -= 5 # The more cards, the smaller spaces in-between
+            if len(self.player_cards) * 2 <= 6:
+                player_left_padding += 50 # The more cards, the less padding there is from the left side of the screen
+                player_spaces += 5 # The more cards, the smaller spaces in-between
+            else:
+                player_left_padding -= 40 # The more cards, the less padding there is from the left side of the screen
+                player_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos2 = [300, 700]
-                # print("default", str(pos2))
-                pos2[0] += player_left_padding
-                # print("padded", str(pos2))
-                new_card_positions_player.append(pos2.copy())
+                pos1 = [500, 650]
+                pos1[0] += i * player_left_padding  # Adjust the x-coordinate based on the index and left padding
+                new_card_positions_player.append(pos1.copy())
             else:
-                # distance = math.sqrt((pos2[0] - cards[i][1][0])**2 + (pos2[1] - cards[i][1][1])**2) # Caluclate distance between end position and current position of card
-                # print(distance)
-                # # If the distance is substantially larger than a regular space between cards, then recalculate distance between cards
-                # if distance <= player_spaces:
-                #     pos2[0] -= player_spaces
-                #     print("n", str(pos2))
-                #     new_card_positions_player.append(pos2.copy())
-                # else:
-                pos2[0] += player_spaces
-                # print("n", str(pos2))
-                new_card_positions_player.append(pos2.copy())
-                
-            
+                prev_pos = new_card_positions_player[i - 1]
+                new_pos = [prev_pos[0] + player_spaces, prev_pos[1]]  # Increment x-coordinate by spaces
+                new_card_positions_player.append(new_pos.copy())
             i += 1
         # Return list with 2 sublists: player card positions and pc card positions
         return [new_card_positions_player, new_card_positions_pc]
