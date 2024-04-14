@@ -163,6 +163,58 @@ class Animations:
             
             i += 1
         display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+    def combine_cards(self, card1, card2):
+        # Move two cards closer to each other until they meet
+        i = 0
+        start_rect1 = [card1[5][0], card1[5][1]]
+        new_rect1 = [card1[5][0], card1[5][1]]
+        start_rect2 = [card2[5][0], card2[5][1]]
+        new_rect2 = [card2[5][0], card2[5][1]]
+
+        distance = math.sqrt((card1[5].x - card2[5].x)**2 + (card1[5].y - card2[5].y)**2) 
+        min_distance = 5
+        print("COMBINE ANIM")
+        while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+            # First position (x or y) is the place we want to move to, the second position (x or y) is where our card is located
+            # Aditionally, in new_positions first [0] is the current loop index, second [0] is the position tuple and [1] is the y value of the position
+            # Moves the card slightly up in 5 int increments to simulate a hover effect
+            # Get next x and y postion by subtracting, resulting in an end animation that heads straight from point A to point B (not jagged)
+            # Card 1
+            x_smoothed1 = card2[5][0]  - card1[5][0]
+            y_smoothed1 = card2[5][1] - card1[5][1]
+            # Card 2
+            x_smoothed2 = card1[5][0]  - card2[5][0]
+            y_smoothed2 = card1[5][1] - card2[5][1]
+            
+            # Determine the number of steps for movement (if reesult is zero, then use 1 instead, since we cant divide by zero)
+            num_steps1 = max(abs(x_smoothed1), abs(y_smoothed1)) if max(abs(x_smoothed1), abs(y_smoothed1)) != 0 else 1
+
+            num_steps2 = max(abs(x_smoothed2), abs(y_smoothed2)) if max(abs(x_smoothed2), abs(y_smoothed2)) != 0 else 1
+
+            # Calculate the step size for each axis
+            step_x1 = x_smoothed1 / num_steps1
+            step_y1 = y_smoothed1 / num_steps1
+
+            step_x2 = x_smoothed2 / num_steps2
+            step_y2 = y_smoothed2 / num_steps2
+
+            # Add the smoothed step to the card's current position
+            # Card 1
+            card1[5][0] += step_x1
+            card1[5][1] += step_y1
+            # Card 2
+            card2[5][0] += step_x2
+            card2[5][1] += step_y2
+
+            new_rect1 = [card1[5][0], card1[5][1]]
+            new_rect2 = [card2[5][0], card2[5][1]]
+
+            distance = math.sqrt((card1[5].x - card2[5].x)**2 + (card1[5].y - card2[5].y)**2) 
+
+            i += 1
+        # Display both cards
+        display.Display.modify_objects_to_display(self, start_rect1, new_rect1, False)
+        display.Display.modify_objects_to_display(self, start_rect2, new_rect2, False)
 
     def card_battle(self, pc_card, player_card, attacking_card):
         if attacking_card == pc_card:
