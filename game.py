@@ -100,6 +100,7 @@ class Game:
         self.pc_lives = 5
         self.round_count = 1 # What round it is numerically?
         self.turn_count = 1
+        self.sorted_at_turn_start = False
         self.pc_attacked = []  # Set to track PC cards that have already attacked
         self.card_selected = False # If a PLAYER card is currently selected to fight, then True
         self.card_selected_rect = None # Currently selected PLAYER card's rect
@@ -112,6 +113,7 @@ class Game:
         self.pc_battled_all_cards_count = 0
         self.player_battled_all_cards_count = 0
         self.no_cards_attacked_yet = True
+        self.already_sorted_at_start = False
         self.added_new_cards = False # Whether we have added new cards to each deck each turn
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
@@ -341,6 +343,7 @@ class Game:
             self.next_turn = "PLAYER"
             Game.end_round(self)
         elif self.turn == "PLAYER":
+            print("PLAYERR")
             self.next_turn = "PC"
             self.sorting_cards = False 
             self.done_base_sort = False
@@ -463,6 +466,7 @@ class Game:
         # Reset variables
         Game.reset_card_values(self)
         self.added_new_cards = False # As we have not yet added a new card this round, set False
+        self.already_sorted_at_start = False # Havent sorted cards at start yet
         # Disable this animation
         self.display_turn = False
     def new_turn(self):
@@ -470,7 +474,7 @@ class Game:
         self.turn_font = pygame.font.SysFont('Arial', 80)
         self.turn_text = self.turn_font.render(str(self.turn) +'s\' turn', True, (0, 0, 0))
         self.screen.blit(self.turn_text, (750,400))
-        self.turn_num_text = self.turn_font.render(str(self.round_count), True, (0, 0, 0))
+        self.turn_num_text = self.turn_font.render(str(self.turn_count), True, (0, 0, 0))
         self.screen.blit(self.turn_num_text, (900,600))
         # UPDATE SCREEN
         pygame.display.update()
@@ -509,7 +513,11 @@ class Game:
         for cardd in self.pc_cards:
             cardd[11] = self.move_to_new_pos_event
         self.done_base_sort = True # Done sorting card position in list
-
+    def reset_events(self):
+        for cardd in self.player_cards:
+            cardd[11] = None
+        for cardd in self.pc_cards:
+            cardd[11] = None
     def run(self):
         global running
         while running:
@@ -564,6 +572,7 @@ class Game:
                                 self.player_cards[i][6] = True # collision check
                                 # if no currently selected card, then animate (and not combining cards)
                                 if self.card_selected is False and self.combining is False:
+                                    # So that sorting doesnt overlap hovering at the same time
                                     self.selected_card = self.player_cards[i]
                                     pygame.event.post(self.hover_event)
                                     new_event = self.hover_event
@@ -582,7 +591,7 @@ class Game:
                                         if self.turn_count == 1:
                                             # If current position of card is not the same as the starting position of the card, then move back to starting position
                                             if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y] and self.player_cards[i][13] is False:
-                                                if self.move_back_disabled is False: # Check that moving back is disabled 
+                                                if self.move_back_disabled is False: # Check that moving back is not disabled 
                                                     self.colliding = False
                                                     pygame.event.post(self.move_to_starting_pos_event)
                                                     new_event = self.move_to_starting_pos_event
@@ -590,21 +599,20 @@ class Game:
                                                     self.player_cards[i][11] = new_event    
                                         else:
                                             # If current position of card is not the same as the new position of the card, then move back to new position
-                                            if self.player_cards[i][5].x != self.new_positions[0][i][0] and self.player_cards[i][5].y != self.new_positions[0][i][1] and self.player_cards[i][13] is False:
-                                                print("NEW POS MOVE BACK")
-                                                if self.move_back_disabled is False: # Check that moving back is disabled 
-                                                    self.colliding = False
-                                                    pygame.event.post(self.move_to_starting_pos_event)
-                                                    new_event = self.move_to_starting_pos_event
-                                                    # Set the newly posted event as the cards' controlling event
-                                                    self.player_cards[i][11] = new_event    
+                                            if self.player_cards[i][5].x != self.new_positions[0][i][0] or self.player_cards[i][5].y != self.new_positions[0][i][1]:
+                                                if self.player_cards[i][13] is False:
+                                                    print("NEW POS MOVE BACK")
+                                                    if self.move_back_disabled is False: # Check that moving back is not disabled 
+                                                        self.colliding = False
+                                                        pygame.event.post(self.move_to_starting_pos_event)
+                                                        new_event = self.move_to_starting_pos_event
+                                                        # Set the newly posted event as the cards' controlling event
+                                                        self.player_cards[i][11] = new_event    
                                     else:   
                                         self.colliding = False
-                                        if self.player_cards[i][14] != 0:
-                                            self.player_cards[i][14] = 0
                                 else:
                                     if self.player_cards[i][14] != 0:
-                                            self.player_cards[i][14] = 0
+                                        self.player_cards[i][14] = 0
                             i += 1
                         # Check each pc card, if currently colliding with cursor then sets them accordingly
                         i = 0
@@ -632,6 +640,8 @@ class Game:
                                         new_event = self.cant_select_event
                                         # Set the newly posted event as the cards' controlling event
                                         self.pc_cards[i][11] = new_event
+                                        if self.pc_cards[i][14] != 0:
+                                            self.pc_cards[i][14] = 0
                                 # If not colliding with this card
                                 elif self.pc_colliding_with_card[i] == False:
                                     self.pc_cards[i][9] = False
@@ -663,9 +673,11 @@ class Game:
                         self.generate_cards(1) # Generate deck of card for both player and pc
                         self.loading = False
                         self.added_new_cards = True
-                    elif self.round_count > 1 and self.added_new_cards == True and self.sorting_cards == False and self.turn is not "PC":
-                        print("Sorting as turn start")
-                        Game.sort_cards(self) # sort cards before turn start for safety (in case a new card is added)
+                    # elif self.round_count > 1 and self.added_new_cards == True and self.sorting_cards == False and self.turn is not "PC":
+                    #     if self.sorted_at_turn_start is False:
+                    #         print("Sorting as turn start")
+                    #         self.sorted_at_turn_start = True
+                    #         Game.sort_cards(self) # sort cards before turn start for safety (in case a new card is added)
                 # WIN
                 elif self.win_screen_active:
                     return
@@ -819,7 +831,8 @@ class Game:
                                         self.run_count = HOVER_RUN_COUNT
                                         pygame.event.post(self.hover_event)
                                         cardd[11] = self.hover_event
-                                # If the card is not colliding with anything and the card selected is not the same as the current indexed card rect, then move card back to starting position
+                                # If the card is not colliding with anything and the card not selected, then move card back to starting position
+                                
                                 elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False and self.colliding_pc is False and cardd[15] is False:
                                     if self.move_back_disabled is False:
                                         print("Move back to starting position")
@@ -867,6 +880,8 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.hover_event:
                             # [12] is the total amount of animation frames that the animation has done
+                            print(cardd[12])
+                            print(self.run_count)
                             if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
@@ -884,13 +899,14 @@ class Game:
                                 # Disable event
                                 cardd[12] = 0
                             else:
-                                # If no cards have attacked yet, then no positions should be changed
+                                # If no cards have attacked yet, then no positions should be changed (first turn only should apply)
                                 if self.no_cards_attacked_yet:
                                     # True is if the current turn is the first turn
                                     animations.Animations.move_to_starting_pos(self, cardd, True, None)
                                     cardd[12] += 1
                                 else:
-                                    # Not the first turn, so set first_turn to False
+                                    print("new positions:", self.new_positions)
+                                    # Not the first turn
                                     animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
                                     cardd[12] += 1
                         i += 1
@@ -903,7 +919,7 @@ class Game:
                             # if card is at the middle of the screen, stop animation
                             if cardd[5].x == SELECT_POSITION_X and cardd[5].y == SELECT_POSITION_Y:
                                 # Disable event
-                                cardd[12] = 5
+                                cardd[12] = 0
                             else:
                                 cardd[12] = 1
                                 self.card_selected = True
@@ -943,7 +959,7 @@ class Game:
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
                                 # print("DISABLE Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
-                                cardd[12] = 5
+                                cardd[12] = 0
                                 player_cards_reached_pos_count += 1
                             else:
                                 self.sorting_cards = True
@@ -961,7 +977,7 @@ class Game:
                         if cardd[11] == self.move_to_new_pos_event:
                             if cardd[5].x == self.new_positions[1][i][0] and cardd[5].y == self.new_positions[1][i][1]:
                                 # Disable event
-                                cardd[12] = 5
+                                cardd[12] = 0
                                 pc_cards_reached_pos_count += 1
                             else:
                                 self.sorting_cards = True
@@ -972,10 +988,12 @@ class Game:
                             i += 1
                     # Checks if all cards have reached the end destination (and all cards for this turn have battled), then end turn
                     if player_cards_reached_pos_count == len(self.player_cards) and pc_cards_reached_pos_count == len(self.pc_cards):
+                        self.sorting_cards = False
+                        Game.reset_events(self)
                         # All cards have battled this turn, so end turn
                         if self.turn is "PLAYER":
-                            print(self.player_battled_all_cards_count)
-                            print(len(self.player_cards))
+                            print("battled card count:", self.player_battled_all_cards_count)
+                            print("player card count", len(self.player_cards))
                             if self.player_battled_all_cards_count == len(self.player_cards):
                                 Game.end_turn(self)
                             else:
@@ -1007,7 +1025,7 @@ class Game:
                             # Calculate distance between first and second card
                             distance_to_target = Game.distance(self, self.first_card_to_combine[5].x, self.first_card_to_combine[5].y, self.second_card_to_combine[5].x, self.second_card_to_combine[5].y)
                             if distance_to_target <= min_distance:
-                                cardd[12] = 5
+                                cardd[12] = 0
                                 print("Delay in battling")
                                 pygame.time.delay(1000) 
                                 
@@ -1070,9 +1088,9 @@ class Game:
                                     pygame.time.delay(1000) 
                                     
                                     # Disable event
-                                    cardd[12] = 5
+                                    cardd[12] = 0
                                     self.battled_pc_card = cardd
-                                    self.selected_card[12] = 5
+                                    self.selected_card[12] = 1
                                     # Calculate winner of this battle
                                     winner = battle_logic.Battle_Logic.determine_outcome(self, self.selected_card, cardd)    
                                     if winner == cardd:
@@ -1153,8 +1171,8 @@ class Game:
                                 distance_to_target = Game.distance(self, self.selected_card[5].x, self.selected_card[5].y, cardd[5].x, cardd[5].y)
                                 if distance_to_target <= min_distance:
                                     # Disable event
-                                    cardd[12] = 5
-                                    self.selected_card[12] = 5
+                                    cardd[12] = 0
+                                    self.selected_card[12] = 0
                                     cardd[11] = None
                                     self.selected_card[11] = None
                                     # Calculate winner of this battle
@@ -1206,7 +1224,6 @@ class Game:
                                                     self.pc_attacked.remove(cardd)
                                                 else:
                                                     temp_card = cardd
-                                                    temp_card[11] = None
                                                     self.pc_attacked.remove(temp_card)
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             self.pc_cards.remove(cardd)
@@ -1216,7 +1233,6 @@ class Game:
                                                     self.pc_attacked.remove(cardd)
                                                 else:
                                                     temp_card = cardd
-                                                    temp_card[11] = None
                                                     self.pc_attacked.remove(temp_card)
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                             self.pc_cards.remove(cardd)
