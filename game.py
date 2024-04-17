@@ -157,6 +157,13 @@ class Game:
         pc_pos = [500, 150] # Default pos
         # Checks if current turn is not the first, if so then take last card positions from outside and redefine
         if self.turn_count > 1:
+            print(self.player_cards)
+            player_last_card_pos[0] = self.player_cards[len(self.player_cards)-1][5].x
+            player_last_card_pos[1] = self.player_cards[len(self.player_cards)-1][5].y
+            pc_last_card_pos[0] = self.pc_cards[len(self.pc_cards)-1][5].x
+            pc_last_card_pos[1] = self.pc_cards[len(self.pc_cards)-1][5].y
+            player_last_card_pos[0] += 100
+            pc_last_card_pos[0] += 100
             player_pos = player_last_card_pos
             pc_pos = pc_last_card_pos
             x = 100
@@ -472,10 +479,12 @@ class Game:
     def new_turn(self):
         self.screen.fill(WHITE)
         self.turn_font = pygame.font.SysFont('Arial', 80)
-        self.turn_text = self.turn_font.render(str(self.turn) +'s\' turn', True, (0, 0, 0))
+        self.turn_text = self.turn_font.render(str(self.turn) +'s turn', True, (0, 0, 0))
         self.screen.blit(self.turn_text, (750,400))
         self.turn_num_text = self.turn_font.render(str(self.turn_count), True, (0, 0, 0))
         self.screen.blit(self.turn_num_text, (900,600))
+        # Reset list of pc cards that have already attacked (since it's a new turn and nothing has attacked yet)
+        self.pc_attacked.clear()
         # UPDATE SCREEN
         pygame.display.update()
         self.clock.tick(60)
@@ -788,7 +797,7 @@ class Game:
                     # Collision and animation checks (if generated cards)
                     if self.generated_cards and self.card_to_collide is not None:
                         for cardd in self.player_cards:
-                            if not self.battling and not self.combining: # Check if card not in battle mode and not combining
+                            if not self.battling and not self.combining and cardd[15] == False: # Check if card not in battle mode and not combining
                                 # Selecting card when it is hovered over
                                 if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False and cardd[15] is False:
                                     if self.pressing:
@@ -989,6 +998,9 @@ class Game:
                     # Checks if all cards have reached the end destination (and all cards for this turn have battled), then end turn
                     if player_cards_reached_pos_count == len(self.player_cards) and pc_cards_reached_pos_count == len(self.pc_cards):
                         self.sorting_cards = False
+                        self.card_selected = False
+                        self.card_selected_rect = None
+                        self.selected_card = None
                         Game.reset_events(self)
                         # All cards have battled this turn, so end turn
                         if self.turn is "PLAYER":
@@ -1021,17 +1033,18 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.combine_event:
                             print("Combining")
-                            min_distance = 5 # minimum distance till "hit" target position
+                            min_distance = 1 # minimum distance till "hit" target position
                             # Calculate distance between first and second card
                             distance_to_target = Game.distance(self, self.first_card_to_combine[5].x, self.first_card_to_combine[5].y, self.second_card_to_combine[5].x, self.second_card_to_combine[5].y)
                             if distance_to_target <= min_distance:
                                 cardd[12] = 0
                                 print("Delay in battling")
-                                pygame.time.delay(1000) 
+                                pygame.time.delay(500) 
                                 
                                 # Replace first card with higher tier card and remove second to achieve a visual 'combining' appearance
                                 higher_tier_card = card.Card.generate_higher_tier_card(self, self.first_card_to_combine[1])
                                 index = self.player_cards.index(self.first_card_to_combine) # index of fisrt card to combine in player cards list
+                                temp = self.player_cards[index]
                                 # Redefine this player cards' values as the higher tiers' ones'
                                 self.player_cards[index][0] = higher_tier_card[0]
                                 self.player_cards[index][1] = higher_tier_card[1]
@@ -1042,8 +1055,10 @@ class Game:
                                 self.player_cards[index][3] = pygame.transform.scale(self.player_cards[index][3], (800,700))
 
                                 self.player_cards[index][11] = None
+                                
                                 # Delete second card since we need it to appear that the two cards merge together
                                 self.player_cards.remove(self.second_card_to_combine)
+                                
                                 self.combining = False
                                 Game.sort_cards(self)
                             else:
@@ -1098,9 +1113,11 @@ class Game:
                                         if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         else:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
                                         self.player_lives -= 1
@@ -1109,20 +1126,67 @@ class Game:
                                         
                                         print("Remove both 2") 
                                         if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
-                                            self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
+                                            if len(self.pc_attacked) > 0:
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
+                                                if cardd in self.pc_attacked:
+                                                    self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
+                                                else:
+                                                    temp_card = cardd
+                                                    temp_card[11] = None
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         else:
-                                            self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
+                                             # Remove also card from pc attacked list
+                                            # Card is in the list 
+                                            if cardd in self.pc_attacked:
+                                                self.pc_attacked.remove(cardd)
+                                            # Card isnt in list
+                                            else:
+                                                temp_card = cardd
+                                                temp_card[11] = None
+                                                # Alternative card is in list
+                                                if temp_card in self.pc_attacked:
+                                                    self.pc_attacked.remove(temp_card)
+                                                # Otherwise card hasnt attacked and isnt in list
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
                                         if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             if len(self.pc_attacked) > 0:
-                                                self.pc_attacked.remove(cardd)
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
+                                                if cardd in self.pc_attacked:
+                                                    self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
+                                                else:
+                                                    temp_card = cardd
+                                                    temp_card[11] = None
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.pc_cards.remove(cardd)
                                         else:
-                                            self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
+                                            # Remove also card from pc attacked list
+                                            # Card is in the list 
+                                            if cardd in self.pc_attacked:
+                                                self.pc_attacked.remove(cardd)
+                                            # Card isnt in list
+                                            else:
+                                                temp_card = cardd
+                                                temp_card[11] = None
+                                                # Alternative card is in list
+                                                if temp_card in self.pc_attacked:
+                                                    self.pc_attacked.remove(temp_card)
+                                                # Otherwise card hasnt attacked and isnt in list
                                             self.pc_cards.remove(cardd)
                                         basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
                                         self.objects_to_display.remove(basecard)
@@ -1134,22 +1198,34 @@ class Game:
                                         print("Remove 3") 
                                         if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                                             if len(self.pc_attacked) > 0:
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
                                                 if cardd in self.pc_attacked:
                                                     self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
                                                 else:
                                                     temp_card = cardd
                                                     temp_card[11] = None
-                                                    self.pc_attacked.remove(temp_card)
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             self.pc_cards.remove(cardd)
                                         else:
                                             if len(self.pc_attacked) > 0:
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
                                                 if cardd in self.pc_attacked:
                                                     self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
                                                 else:
                                                     temp_card = cardd
                                                     temp_card[11] = None
-                                                    self.pc_attacked.remove(temp_card)
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                             self.pc_cards.remove(cardd)
                                         basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
@@ -1184,23 +1260,38 @@ class Game:
                                         if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         else:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
                                         self.pc_lives -= 1
                                         
                                     elif winner is None:
                                         if len(self.pc_attacked) > 0:
-                                            self.pc_attacked.remove(cardd)
+                                            # Remove also card from pc attacked list
+                                                # Card is in the list 
+                                                if cardd in self.pc_attacked:
+                                                    self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
+                                                else:
+                                                    temp_card = cardd
+                                                    temp_card[11] = None
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                         print("Remove both 2") 
                                         if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                         else:
                                             self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], False])
                                             self.player_cards.remove(self.selected_card)
+                                            
                                             
                                         basecard = Game.blind_find(self, self.objects_to_display, selected_card_pos)
                                         self.objects_to_display.remove(basecard)
@@ -1217,23 +1308,36 @@ class Game:
                                     else:
                                         print("Remove 3") 
                                         print(self.pc_attacked)
-                                        print(cardd)
                                         if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                                             if len(self.pc_attacked) > 0:
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
                                                 if cardd in self.pc_attacked:
                                                     self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
                                                 else:
                                                     temp_card = cardd
-                                                    self.pc_attacked.remove(temp_card)
+                                                    temp_card[11] = None
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], False])
                                             self.pc_cards.remove(cardd)
                                         else:
                                             if len(self.pc_attacked) > 0:
+                                                # Remove also card from pc attacked list
+                                                # Card is in the list 
                                                 if cardd in self.pc_attacked:
                                                     self.pc_attacked.remove(cardd)
+                                                # Card isnt in list
                                                 else:
                                                     temp_card = cardd
-                                                    self.pc_attacked.remove(temp_card)
+                                                    temp_card[11] = None
+                                                    # Alternative card is in list
+                                                    if temp_card in self.pc_attacked:
+                                                        self.pc_attacked.remove(temp_card)
+                                                    # Otherwise card hasnt attacked and isnt in list
                                             self.objects_to_display.remove([cardd[3], [cardd[5].x, cardd[5].y], True])
                                             self.pc_cards.remove(cardd)
                                         basecard = Game.blind_find(self, self.objects_to_display, cardd_pos)
@@ -1263,6 +1367,7 @@ class Game:
                             self.play_screen_active = True
                         # Cards have already been generated and collisiosn have been checked earlier
                         if self.generated_cards and self.collisions_checked:
+                            print("One")
                             # Cursor colliding with end turn button and clicking (Player wants to end their turn)
                             if self.collide_end_turn_button:
                                 print("Colliding with end turn button")
@@ -1271,14 +1376,20 @@ class Game:
                             i = 0
                             while i < len(self.player_cards):
                                 # Cursor colliding with player card 
-                                if self.p_colliding_with_card[i] is True and self.card_selected and self.card_to_collide != self.card_selected_rect:
+                                if self.p_colliding_with_card[i] is True and self.player_cards[i][15] == False:
                                     # No card selected yet, Select card and place on board
                                     if self.card_selected is False:
+                                        print("Card selected is False")
+                                        self.card_selected = True
+                                        self.card_selected_rect = self.player_cards[i][5]
+                                        self.selected_card = self.player_cards[i]
                                         self.player_cards[i][11] = self.select_event
                                         pygame.event.post(self.select_event)
                                     # Card already selected, 'No.' animation plays
                                     else:
-                                        if self.card_selected_rect == self.card_to_collide:
+                                        print("Card selected is True")
+                                        if self.card_selected_rect == self.card_to_collide and self.player_cards[i][15] == False:
+                                            print("Card selected rect as current rect cursor on")
                                             # Cant select same card again
                                             self.player_cards[i][11] = self.cant_select_event
                                             pygame.event.post(self.cant_select_event)
@@ -1293,6 +1404,11 @@ class Game:
                             if self.first_card_to_combine is None:
                                 print("First card selected")
                                 self.combining = True
+
+                                self.card_selected = True
+                                self.selected_card = self.first_card_to_combine
+                                self.card_selected_rect = self.first_card_to_combine
+
                                 self.first_card_to_combine = self.card_to_collide
                                 self.selected_card_count += 1
                                 pygame.event.post(self.select_event)
@@ -1321,6 +1437,8 @@ class Game:
                                     # Set card events
                                     self.first_card_to_combine[11] = self.combine_event
                                     self.second_card_to_combine[11] = self.combine_event
+                                    self.player_cards[self.player_cards.index(self.first_card_to_combine)][11] = self.combine_event
+                                    self.player_cards[self.player_cards.index(self.second_card_to_combine)][11] = self.combine_event
                                     pygame.event.post(self.combine_event)
                                     
                                 else:
