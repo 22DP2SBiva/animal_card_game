@@ -7,14 +7,17 @@ class Display:
         # Display each object to screen
         i = 0
         display_last = False
+        base_of_last_object = None
         while i < len(self.objects_to_display):
             # Check if the object should be rendered at the top most layer
             if self.objects_to_display[i][2] is True:
                 display_last = True
                 # Search through all objects to find base card that mathes position of this top image card (but not the same object)
                 x = 0 # debug value
+                print(self.objects_to_display)
                 for obj in self.objects_to_display:
                     if obj[1] == self.objects_to_display[i][1] and obj[0] != self.objects_to_display[i][0]:
+                        print(obj[1], self.objects_to_display[i][1], obj[0], self.objects_to_display[i][0])
                         base_of_last_object = obj # base card
                     # elif obj[1] == self.objects_to_display[i][1] and obj[0] == self.objects_to_display[i][0]:
                     #     break
@@ -31,8 +34,11 @@ class Display:
             i += 1
         # Display the top most ofject last, so that it renders on top of all other objects
         if display_last:
-            self.screen.blit(base_of_last_object[0], base_of_last_object[1]) # base card
-            self.screen.blit(last_object[0], last_object[1]) # card image
+            if base_of_last_object is None:
+                self.screen.blit(last_object[0], [200,200]) # card image
+            else:
+                self.screen.blit(base_of_last_object[0], base_of_last_object[1]) # base card
+                self.screen.blit(last_object[0], last_object[1]) # card image
 
             #DEBUG
             #self.screen.blit(base_of_last_object[0], [255,255]) # base card
