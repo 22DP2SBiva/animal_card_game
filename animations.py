@@ -172,7 +172,7 @@ class Animations:
         new_rect2 = [card2[5][0], card2[5][1]]
 
         distance = math.sqrt((card1[5].x - card2[5].x)**2 + (card1[5].y - card2[5].y)**2) 
-        min_distance = 1
+        min_distance = 15
         print("COMBINE ANIM")
         while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # First position (x or y) is the place we want to move to, the second position (x or y) is where our card is located

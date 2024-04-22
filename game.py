@@ -558,7 +558,7 @@ class Game:
                     # Goes through each collission check in the list (player cards) and if colliding with cursor then sets them accordingly
                     self.p_colliding_with_card = collisions.Collisions.deck_collide_check(self, self.p_rects, self.p_collission_checks, self.pos) # Player
                     self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos) # PC
-                    
+                    print("Are we combining?", self.combining)
                     self.drawing_unselectable = False # For checking if an unselectable rect is being drawn
                     if self.turn == "PLAYER":
                         i = 0
@@ -637,7 +637,7 @@ class Game:
                                         self.battling = True
                                         pygame.event.post(self.battle_event)
                                         new_event = self.battle_event
-                                        # Set the newly posted event as the cards' controlling event
+                                        # Set the newly posted event as the cards controlling event
                                         self.pc_cards[i][11] = new_event
                                         self.selected_card[11] = new_event # set player selected card to activate upon battle event
                                         self.selected_card[15] = True # Is attacking, so True
@@ -648,7 +648,7 @@ class Game:
                                         # Card can't be interacted with, so turn grey
                                         pygame.event.post(self.cant_select_event)
                                         new_event = self.cant_select_event
-                                        # Set the newly posted event as the cards' controlling event
+                                        # Set the newly posted event as the cards controlling event
                                         self.pc_cards[i][11] = new_event
                                         if self.pc_cards[i][14] != 0:
                                             self.pc_cards[i][14] = 0
@@ -657,8 +657,6 @@ class Game:
                                     self.pc_cards[i][9] = False
                                     if self.pc_cards[i][14] != 0:
                                         self.pc_cards[i][14] = 0
-                                    # If current position of card is not the same as the starting position of the card, then move back to starting position
-                                    # ! TODO: TURN BACK TO ORIGINAL COLOR
                             i += 1
                         self.collisions_checked = True
             
@@ -903,19 +901,22 @@ class Game:
                     print("Moving back")
                     i = 0
                     for cardd in self.player_cards:
+                        
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_starting_pos_event:
+                            print("Player card Moving back")
                             if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
                             else:
-                                # If no cards have attacked yet, then no positions should be changed (first turn only should apply)
-                                if self.no_cards_attacked_yet:
-                                    # True is if the current turn is the first turn
+                                # If no cards have attacked yet and no cards have yet combined, then no positions should be changed (first turn only should apply)
+                                if self.no_cards_attacked_yet and self.combined_cards is False:
                                     animations.Animations.move_to_starting_pos(self, cardd, True, None)
                                     cardd[12] += 1
+                                elif self.combined_cards:
+                                    animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
+                                    cardd[12] += 1
                                 else:
-                                    print("new positions:", self.new_positions)
                                     # Not the first turn
                                     animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
                                     cardd[12] += 1
@@ -962,13 +963,13 @@ class Game:
                     self.new_positions = animations.Animations.sort_card_positions(self, self.objects_to_display, self.player_cards, self.pc_cards)
                     i = 0
                     player_cards_reached_pos_count = 0
-                    for cardd in self.player_cards:
+                    for cardd in self.player_cards: 
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
+                            print("Player card moving to NEW POS")
                             # new positions:
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
-                                # print("DISABLE Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
                                 cardd[12] = 0
                                 player_cards_reached_pos_count += 1
                             else:
@@ -976,8 +977,6 @@ class Game:
                                 self.done_base_sort = True
                                 print("player moving")
                                 cardd[12] = 1
-                                # print("First", str(self.new_positions[0][i]))
-                                # print("Current pos: ", str(cardd[5]), " Target pos: ", str(self.new_positions[0][i]))
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
                             i += 1
                     pc_cards_reached_pos_count = 0
@@ -985,6 +984,7 @@ class Game:
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
+                            print("PC card moving to NEW POS")
                             if cardd[5].x == self.new_positions[1][i][0] and cardd[5].y == self.new_positions[1][i][1]:
                                 # Disable event
                                 cardd[12] = 0
@@ -1034,19 +1034,21 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.combine_event:
                             print("Combining")
-                            min_distance = 1 # minimum distance till "hit" target position
+                            min_distance = 15 # minimum distance till "hit" target position
                             # Calculate distance between first and second card
                             distance_to_target = Game.distance(self, self.first_card_to_combine[5].x, self.first_card_to_combine[5].y, self.second_card_to_combine[5].x, self.second_card_to_combine[5].y)
                             if distance_to_target <= min_distance:
                                 cardd[12] = 0
                                 print("Delay in battling")
                                 pygame.time.delay(500) 
-                                
+                                print("before", self.objects_to_display)
                                 # Replace first card with higher tier card and remove second to achieve a visual 'combining' appearance
                                 higher_tier_card = card.Card.generate_higher_tier_card(self, self.first_card_to_combine[1])
                                 index = self.player_cards.index(self.first_card_to_combine) # index of fisrt card to combine in player cards list
-                                temp = self.player_cards[index]
+                                obj_to_redefine = self.objects_to_display.index([self.player_cards[index][3], [self.player_cards[index][5].x, self.player_cards[index][5].y], False])
                                 # Redefine this player cards' values as the higher tiers' ones'
+                                print(self.player_cards[index][0])
+                                print(higher_tier_card[0])
                                 self.player_cards[index][0] = higher_tier_card[0]
                                 self.player_cards[index][1] = higher_tier_card[1]
                                 self.player_cards[index][2] = higher_tier_card[2]
@@ -1056,12 +1058,30 @@ class Game:
                                 self.player_cards[index][3] = pygame.transform.scale(self.player_cards[index][3], (800,700))
 
                                 self.player_cards[index][11] = None
-                                
+
+                                # Redefine card in object list with new values
+                                print("obj to r", obj_to_redefine)
+                                print("in list obj to r", self.objects_to_display[obj_to_redefine])
+                                self.objects_to_display[obj_to_redefine] = [self.player_cards[index][3], [self.player_cards[index][5].x, self.player_cards[index][5].y], False]
                                 # Delete second card since we need it to appear that the two cards merge together
                                 self.player_cards.remove(self.second_card_to_combine)
+                                self.objects_to_display.remove([self.second_card_to_combine[3], [self.second_card_to_combine[5].x, self.second_card_to_combine[5].y], False])
+                                # Search in list for base card and remove it
+                                base_card = Game.blind_find(self, self.objects_to_display, [self.second_card_to_combine[5].x, self.second_card_to_combine[5].y])
+                                self.objects_to_display.remove(base_card)
+                                print("after", self.objects_to_display)
                                 
+                                # Reset values
                                 self.combining = False
-                                Game.sort_cards(self)
+                                self.selected_card_count = 0
+                                self.first_card_to_combine = None
+                                self.second_card_to_combine = None
+                                self.card_selected = False
+                                self.selected_card = None
+                                self.card_selected_rect = None
+                                self.combined_cards = True
+                                self.new_positions = animations.Animations.sort_card_positions(self, self.objects_to_display, self.player_cards, self.pc_cards)
+
                             else:
                                 cardd[12] = 1
                                 animations.Animations.combine_cards(self, self.first_card_to_combine, self.second_card_to_combine)
