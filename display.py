@@ -16,6 +16,7 @@ class Display:
                 x = 0 # debug value
                 print(self.objects_to_display)
                 for obj in self.objects_to_display:
+                    # Checks if object position is the same as current list obj position and if image is NOT same for both objects
                     if obj[1] == self.objects_to_display[i][1] and obj[0] != self.objects_to_display[i][0]:
                         print(obj[1], self.objects_to_display[i][1], obj[0], self.objects_to_display[i][0])
                         base_of_last_object = obj # base card

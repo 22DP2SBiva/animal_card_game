@@ -25,7 +25,7 @@ PLAYER_CARD_POS_X = 500
 PLAYER_CARD_POS_Y = 680
 PC_CARD_POS_X = 500
 PC_CARD_POS_Y = 150
-CARD_SPACING = 160
+CARD_SPACING = 220
 
 player_last_card_pos = [0,0] # position of last card in player deck
 pc_last_card_pos = [0,0] # position of last card in pc deck
@@ -39,7 +39,9 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.font.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+        # Get current monitor size and set screen resolution to that value
+        monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h] 
+        self.screen = pygame.display.set_mode((monitor_size[0], monitor_size[1]), pygame.FULLSCREEN)
 
         pygame.display.set_caption("Wildcards")
 
@@ -128,10 +130,10 @@ class Game:
         # Lists
         self.debug_rects = []
 
-        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14                      15           16
-        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect, attacked)
+        #                  0            1           2                   3                            4            5               6              7                8               9                   10        11          12                  13                  14                      15           16             17
+        # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect, attacked, just_combined)
         self.player_cards = []
-        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14                      15          16
+        #                  0            1           2                   3                            4            5               6                 7              8             9                  10           11            12               13                  14                      15          16 
         # list (title(string), tier(int), image dir[string], converted image (surface), ability(string), card base dir[string], rect, collision check bool, card revealed[bool], position[tuple], animating, debug color, current_event, animation_frame_count, move_back_disabled, unselectable_rect, attacked)
         self.pc_cards = []
 
@@ -139,11 +141,7 @@ class Game:
         self.p_colliding_with_card = ()
         self.pc_colliding_with_card= ()
 
-        # IMAGES
-        self.start_button = pygame.image.load("Assets/start_button.png").convert_alpha()
-        self.options_button = pygame.image.load("Assets/options_button.png").convert_alpha()
-        self.exit_button = pygame.image.load("Assets/exit_button.png").convert_alpha()
-        self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
+        
     def generate_cards(self, count_to_generate):
         global player_last_card_pos
         global pc_last_card_pos
@@ -153,8 +151,8 @@ class Game:
         self.player_sub_list = []
         self.pc_sub_list = []
         
-        player_pos = [500, 680] # Default pos
-        pc_pos = [500, 150] # Default pos
+        player_pos = [350, 700] # Default pos
+        pc_pos = [350, 80] # Default pos
         # Checks if current turn is not the first, if so then take last card positions from outside and redefine
         if self.turn_count > 1:
             print(self.player_cards)
@@ -193,13 +191,13 @@ class Game:
                 # load/transform card image
                 self.player_sub_list[3] = pygame.image.load(self.player_sub_list[2]) # Loads image
                 self.player_sub_list[3].convert_alpha() # Removes transparent bits from image
-                self.player_sub_list[3] = pygame.transform.scale(self.player_sub_list[3], (800,700)) # Scales image to fit
+                self.player_sub_list[3] = pygame.transform.scale(self.player_sub_list[3], (1000,900)) # Scales image to fit
 
                 # base cards
                 self.player_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
-                self.player_sub_list[4] = pygame.transform.scale(self.player_sub_list[4], (800,700))
+                self.player_sub_list[4] = pygame.transform.scale(self.player_sub_list[4], (1000,900))
                 # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-                self.player_sub_list.append(pygame.Rect(player_pos[0] + x, player_pos[1], 150, 300)) # start button collsion rect index [5]
+                self.player_sub_list.append(pygame.Rect(player_pos[0] + x, player_pos[1], 170, 320)) # start button collsion rect index [5]
                 # Add collision check bool
                 self.player_sub_list.append(False) # always at start
                 # Revealed bool (used for checking if player can currently see waht card it is)
@@ -220,6 +218,8 @@ class Game:
                 self.player_sub_list.append(0)
                 # Has the card attacekd?
                 self.player_sub_list.append(False)
+                # Has the card jsut combined with another card?
+                self.player_sub_list.append(False)
 
                 # Store objects which need to be displayed to the screen
                 # Base card must be displayed first since it is on the bottom most layer and the card image is on a higher layer
@@ -232,15 +232,15 @@ class Game:
                 # load card image
                 self.pc_sub_list[3] = pygame.image.load(self.pc_sub_list[2])
                 self.pc_sub_list[3].convert_alpha()
-                self.pc_sub_list[3] = pygame.transform.scale(self.pc_sub_list[3], (800,700))
+                self.pc_sub_list[3] = pygame.transform.scale(self.pc_sub_list[3], (1000,900))
                 # base cards
                 self.pc_sub_list.append(pygame.image.load('Assets/b_card.png').convert_alpha())
-                self.pc_sub_list[4] = pygame.transform.scale(self.pc_sub_list[4], (800,700))
+                self.pc_sub_list[4] = pygame.transform.scale(self.pc_sub_list[4], (1000,900))
 
                 # Collision rects and checks
 
                 # create card rects (top left corner = 400+x, 200; widht = 150, height = 300)
-                self.pc_sub_list.append(pygame.Rect(pc_pos[0] + x, pc_pos[1], 150, 300)) # start button collsion rect index [5]
+                self.pc_sub_list.append(pygame.Rect(pc_pos[0] + x, pc_pos[1], 170, 320)) # start button collsion rect index [5]
                 # Add collision check bool
                 self.pc_sub_list.append(False) # check if cursor is over rect (start button) index [6]
                 # Revealed bool (used for checking if player can currently see waht card it is)
@@ -295,15 +295,32 @@ class Game:
         self.added_new_cards = True
 
     def start_screen(self):
-        self.screen.fill(WHITE)
+        # Background
+        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
+        self.screen.blit(self.bg_plains, (0,0))
+        # IMAGES
+        self.start_button = pygame.image.load("Assets/start_button.png").convert_alpha()
+        self.options_button = pygame.image.load("Assets/options_button.png").convert_alpha()
+        self.account_button = pygame.image.load("Assets/account_button.png").convert_alpha()
+        self.exit_button = pygame.image.load("Assets/exit_button.png").convert_alpha()
+        self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
         self.logo = pygame.image.load("Assets/logo.png").convert_alpha()
-        self.screen.blit(self.logo, (600,150))
-        self.screen.blit(self.start_button, (700,400))
-        self.start_rect = pygame.Rect(750, 400, 200, 150) # start button collsion rect
-        self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+        
 
-        self.screen.blit(self.options_button, (700,550))
-        self.screen.blit(self.exit_button, (700,750))
+        self.start_button = pygame.transform.scale(self.start_button, (1200,900))
+        self.options_button = pygame.transform.scale(self.options_button, (1200,900))
+        self.account_button = pygame.transform.scale(self.account_button, (1200,900))
+        self.exit_button = pygame.transform.scale(self.exit_button, (1200,900))
+
+        self.screen.blit(self.logo, (600,150))
+        self.screen.blit(self.start_button, (790,440))
+        self.screen.blit(self.options_button, (790,560))
+        self.screen.blit(self.account_button, (790,680))
+        self.screen.blit(self.exit_button, (830,820))
+        
+
+        self.start_rect = pygame.Rect(790, 440, 200, 150) # start button collsion rect
+        self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
     def options_screen(self):
         self.screen.fill(WHITE)
         self.close_button = pygame.image.load("Assets/close_button.png").convert_alpha()
@@ -376,7 +393,7 @@ class Game:
                 # convert/scale card image
                 self.player_cards[i][3] = pygame.image.load(new_card[2])
                 self.player_cards[i][3].convert_alpha()
-                self.player_cards[i][3] = pygame.transform.scale(self.player_cards[i][3], (800,700))
+                self.player_cards[i][3] = pygame.transform.scale(self.player_cards[i][3], (1000,900))
                 print("NEW player cards", str(self.player_cards[i]))
                 new_player_card.append([self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False])
                 
@@ -392,7 +409,7 @@ class Game:
                 # convert/scale card image
                 self.pc_cards[i][3] = pygame.image.load(new_card[2])
                 self.pc_cards[i][3].convert_alpha()
-                self.pc_cards[i][3] = pygame.transform.scale(self.pc_cards[i][3], (800,700))
+                self.pc_cards[i][3] = pygame.transform.scale(self.pc_cards[i][3], (1000,900))
                 new_pc_card.append([self.pc_cards[i][3], [self.pc_cards[i][5].x, self.pc_cards[i][5].y], False])
                 
             i += 1
@@ -560,6 +577,7 @@ class Game:
                     self.pc_colliding_with_card =  collisions.Collisions.deck_collide_check(self, self.pc_rects, self.pc_collission_checks, self.pos) # PC
                     print("Are we combining?", self.combining)
                     self.drawing_unselectable = False # For checking if an unselectable rect is being drawn
+                    self.colliding = False
                     if self.turn == "PLAYER":
                         i = 0
                         while i < len(self.p_colliding_with_card):
@@ -602,7 +620,6 @@ class Game:
                                             # If current position of card is not the same as the starting position of the card, then move back to starting position
                                             if self.player_cards[i][8] != [self.player_cards[i][5].x,self.player_cards[i][5].y] and self.player_cards[i][13] is False:
                                                 if self.move_back_disabled is False: # Check that moving back is not disabled 
-                                                    self.colliding = False
                                                     pygame.event.post(self.move_to_starting_pos_event)
                                                     new_event = self.move_to_starting_pos_event
                                                     # Set the newly posted event as the cards' controlling event
@@ -613,13 +630,10 @@ class Game:
                                                 if self.player_cards[i][13] is False:
                                                     print("NEW POS MOVE BACK")
                                                     if self.move_back_disabled is False: # Check that moving back is not disabled 
-                                                        self.colliding = False
                                                         pygame.event.post(self.move_to_starting_pos_event)
                                                         new_event = self.move_to_starting_pos_event
                                                         # Set the newly posted event as the cards' controlling event
                                                         self.player_cards[i][11] = new_event    
-                                    else:   
-                                        self.colliding = False
                                 else:
                                     if self.player_cards[i][14] != 0:
                                         self.player_cards[i][14] = 0
@@ -668,7 +682,8 @@ class Game:
                 elif self.play_screen_active:
                     self.screen.fill(WHITE)
                     # End turn button
-                    self.screen.blit(self.end_turn_button, (150,800))
+                    self.end_turn_button = pygame.transform.scale(self.end_turn_button, (1200,900))
+                    self.screen.blit(self.end_turn_button, (25,850))
                     self.end_turn_button_rect = pygame.Rect(150, 800, 200, 150) # end turn collsion rect
                     self.collide_end_turn_button = self.end_turn_button_rect.collidepoint(self.pos) # check if cursor is over rect (end turn button)
                     # First round
@@ -904,7 +919,6 @@ class Game:
                         
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_starting_pos_event:
-                            print("Player card Moving back")
                             if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
@@ -914,7 +928,14 @@ class Game:
                                     animations.Animations.move_to_starting_pos(self, cardd, True, None)
                                     cardd[12] += 1
                                 elif self.combined_cards:
-                                    animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
+                                    # If card just combined, move this card above other cards till gets to new position
+                                    if cardd[16] is True:
+                                        animations.Animations.move_to_starting_pos(self, cardd, False, [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50])
+                                        if [cardd[5].x, cardd[5].y]  == [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50]: # If card at the new postiiton
+                                            cardd[16] = False
+                                            print("Yahoo")
+                                    else:
+                                        animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
                                     cardd[12] += 1
                                 else:
                                     # Not the first turn
@@ -1039,6 +1060,7 @@ class Game:
                             distance_to_target = Game.distance(self, self.first_card_to_combine[5].x, self.first_card_to_combine[5].y, self.second_card_to_combine[5].x, self.second_card_to_combine[5].y)
                             if distance_to_target <= min_distance:
                                 cardd[12] = 0
+                                cardd[16] = True
                                 print("Delay in battling")
                                 pygame.time.delay(500) 
                                 print("before", self.objects_to_display)
@@ -1055,7 +1077,7 @@ class Game:
                                 # convert/scale card image
                                 self.player_cards[index][3] = pygame.image.load(self.player_cards[index][2])
                                 self.player_cards[index][3].convert_alpha()
-                                self.player_cards[index][3] = pygame.transform.scale(self.player_cards[index][3], (800,700))
+                                self.player_cards[index][3] = pygame.transform.scale(self.player_cards[index][3], (1000,900))
 
                                 self.player_cards[index][11] = None
 
@@ -1417,7 +1439,7 @@ class Game:
                                     cardd[12] = 1
                                     self.selected_card[12] = 1
                                     animations.Animations.card_battle(self, cardd, self.selected_card, self.selected_card)
-              
+                print("Colliding?", self.colliding)
                 # Mouse button down (could be any)
                 if event.type == pygame.MOUSEBUTTONDOWN: 
                     print("\033[31mPRESSED\033[0m")
@@ -1459,6 +1481,7 @@ class Game:
                                             self.player_cards[i][11] = self.cant_select_event
                                             pygame.event.post(self.cant_select_event)
                                 i += 1
+                    
                     # RIGHT CLICK
                     elif event.button == 3:
                         print("Right click")

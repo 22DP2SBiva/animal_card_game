@@ -84,8 +84,8 @@ class Animations:
     #                         obj_to_display
     def sort_card_positions(self, cards, player_cards, pc_cards):
         # PC
-        pc_left_padding = 500
-        pc_spaces = 200
+        pc_left_padding = 350
+        pc_spaces = 220
         new_card_positions_pc = []
         # Defines spacing ranges for pc cards
         i = 0
@@ -99,7 +99,7 @@ class Animations:
                 pc_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos1 = [500, 150]
+                pos1 = [350, 80]
                 pos1[0] += i * pc_left_padding  # Adjust the x-coordinate based on the index and left padding
                 new_card_positions_pc.append(pos1.copy())
             else:
@@ -108,8 +108,8 @@ class Animations:
                 new_card_positions_pc.append(new_pos.copy())
             i += 1
         # PLAYER
-        player_left_padding = 500
-        player_spaces = 200
+        player_left_padding = 350
+        player_spaces = 220
         new_card_positions_player = []
         # Defines spacing ranges for pc cards
         i = 0
@@ -123,7 +123,7 @@ class Animations:
                 player_spaces -= 5 # The more cards, the smaller spaces in-between
             # Sets positions for pc cards
             if i == 0:
-                pos1 = [500, 650]
+                pos1 = [350, 700]
                 pos1[0] += i * player_left_padding  # Adjust the x-coordinate based on the index and left padding
                 new_card_positions_player.append(pos1.copy())
             else:
