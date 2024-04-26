@@ -110,6 +110,7 @@ class Game:
         self.round_count = 1 # What round it is numerically?
         self.turn_count = 1
         self.sorted_at_turn_start = False
+        self.press_count = 0 # How many times mouse left click has been pressed
         self.pc_attacked = []  # Set to track PC cards that have already attacked
         self.card_selected = False # If a PLAYER card is currently selected to fight, then True
         self.card_selected_rect = None # Currently selected PLAYER card's rect
@@ -1513,8 +1514,9 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN: 
                     print("\033[31mPRESSED\033[0m")
                     # LEFT CLICK
-                    if event.button == 1:
+                    if event.button == 1 and self.selected_card_count != 1:
                         self.pressing = True
+                        self.press_count += 1
                         # START SCREEEN
                         if self.start_screen_active: 
                             # Start button collision
@@ -1587,11 +1589,12 @@ class Game:
                                 i += 1
                     
                     # RIGHT CLICK
-                    elif event.button == 3:
+                    elif event.button == 3 and self.card_selected_rect is None:
                         print("Right click")
                         if self.colliding:
                             print("Past colliuding")
                             self.pressing = True
+                            self.press_count += 1
                             # Select first card
                             if self.first_card_to_combine is None:
                                 print("First card selected")
@@ -1609,16 +1612,31 @@ class Game:
                             elif self.first_card_to_combine is not None and self.card_to_collide is self.first_card_to_combine:
                                 print(self.card_to_collide)
                                 print(self.second_card_to_combine)
-                                print("Selecting same first card")
-                                self.first_card_to_combine[11] = self.cant_select_event
-                                pygame.event.post(self.cant_select_event)
+                                print("Selecting same first card (NO)")
+                                # Reset valeus and unselect card
+                                card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
+                                card_to_change[11] = self.move_to_starting_pos_event
+                                card_to_change[12] = 0
+                                card_to_change[15] = False
+                                card_to_change[13] = False
+                                card_to_change[6] = False
+                                self.pressing = False
+                                pygame.event.post(self.move_to_starting_pos_event)
+                                self.combining = False
+
+                                self.card_selected = False
+                                self.selected_card = None
+                                self.card_selected_rect = None
+
+                                self.first_card_to_combine = None
+                                self.selected_card_count = 0
                             elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
                                 # Set second card as card under cursor
                                 self.second_card_to_combine = self.card_to_collide
                                 print("Not same card and card only 1")
                                 # Selecting second card (for combining cards)
                                 # check if theyre the same type of card (Grasshopper for instance)
-                                if self.first_card_to_combine[1] == self.second_card_to_combine[1]:
+                                if self.first_card_to_combine[1] == self.second_card_to_combine[1] and self.first_card_to_combine[1] is not 4:
                                     print("Combinging!")
                                     # SELECT BOTH CARDS and COMBINE
                                     self.selected_card_count += 1 # how many cards have been selected in total
@@ -1634,13 +1652,43 @@ class Game:
                                     pygame.event.post(self.combine_event)
                                     
                                 else:
-                                    print("Not same two cards")
-                                    self.first_card_to_combine[11] = self.cant_select_event
-                                    pygame.event.post(self.cant_select_event)
+                                    print("Not same two cards or Eagles both")
+                                    card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
+                                    card_to_change[11] = self.move_to_starting_pos_event
+                                    card_to_change[12] = 0
+                                    card_to_change[15] = False
+                                    card_to_change[13] = False
+                                    card_to_change[6] = False
+                                    self.pressing = False
+                                    pygame.event.post(self.move_to_starting_pos_event)
+                                    # Reset valeus and unselect card
+                                    self.combining = False
+
+                                    self.card_selected = False
+                                    self.selected_card = None
+                                    self.card_selected_rect = None
+                                    self.second_card_to_combine = None
+
+                                    self.first_card_to_combine = None
+                                    self.selected_card_count = 0
                             elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
                                 print("Not same card and card 2")
-                                self.first_card_to_combine[11] = self.cant_select_event
-                                pygame.event.post(self.cant_select_event)
+                                card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
+                                card_to_change[11] = self.move_to_starting_pos_event
+                                card_to_change[12] = 0
+                                card_to_change[15] = False
+                                card_to_change[13] = False
+                                card_to_change[6] = False
+                                
+                                pygame.event.post(self.move_to_starting_pos_event)
+                                # Reset valeus and unselect card
+                                self.combining = False
+
+                                self.card_selected = False
+                                self.selected_card = None
+                                self.card_selected_rect = None
+                                self.second_card_to_combine = None
+                                self.second_card_to_combine = None
                                 # SHAKE CARD ANIMATION (CANT SELECT ANYMORE)
                             # i = 0
                             # while i < len(self.pc_cards): 
@@ -1660,6 +1708,12 @@ class Game:
                         #     i += 1
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False
+                print("Press count", self.press_count)
+                print(pygame.mouse.get_pressed()[0])
+                if self.press_count > 1:
+                    self.pressing = False
+                    self.press_count = 0
+                self.press_count += 1
                 # KEYDOWN events
                 if event.type == pygame.KEYDOWN:
                     # Quit game with escape key
