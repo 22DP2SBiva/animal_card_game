@@ -100,10 +100,16 @@ class Game:
         # How many live left each player has
         self.player_lives = 5
         self.pc_lives = 5
+        self.options_open = False
+        self.account_choice_open = False
+        self.account_login_open = False
+        self.account_signin_open = False
+        self.collide_login = False
+        self.collide_signin = False
+        self.collide_back = False
         self.round_count = 1 # What round it is numerically?
         self.turn_count = 1
         self.sorted_at_turn_start = False
-        self.press_count = 0 # How many times mouse left click has been pressed
         self.pc_attacked = []  # Set to track PC cards that have already attacked
         self.card_selected = False # If a PLAYER card is currently selected to fight, then True
         self.card_selected_rect = None # Currently selected PLAYER card's rect
@@ -320,11 +326,21 @@ class Game:
         self.screen.blit(self.exit_button, (830,820))
         
 
-        self.start_rect = pygame.Rect(790, 440, 200, 150) # start button collsion rect
+        self.start_rect = pygame.Rect(790, 440, 220, 150) # start button collsion rect
         self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+        self.options_rect = pygame.Rect(790,560, 220, 150) # start button collsion rect
+        self.collide_options = self.options_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+        self.account_rect = pygame.Rect(790,680, 220, 150) # start button collsion rect
+        self.collide_account = self.account_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+        self.exit_rect = pygame.Rect(830,820, 220, 150) # start button collsion rect
+        self.collide_exit = self.exit_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
     def options_screen(self):
-        self.screen.fill(WHITE)
-        self.close_button = pygame.image.load("Assets/close_button.png").convert_alpha()
+        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
+        self.screen.blit(self.bg_plains, (0,0))
+        self.options_panel = pygame.image.load("Assets/options_panel.png").convert_alpha()
+        self.options_panel = pygame.transform.scale(self.options_panel, (1700,1100))
+        self.screen.blit(self.options_panel, (280,60))
+        self.options_panel = pygame.transform.scale(self.options_panel, (1200,900))
         self.max_card_amount_text = self.title_font.render('Max card amount: ', True, (0, 0, 0))
         self.new_cards_each_round_text = self.title_font.render('New cards each round: ', True, (0, 0, 0))
         self.title_text = self.title_font.render('Options', True, (0, 0, 0))
@@ -332,19 +348,56 @@ class Game:
         self.input_rect_max_card = pygame.Rect(710, 500, 200, 150) 
         self.collide_input_max_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect 
         self.input_rect_new_card = pygame.Rect(710, 500, 200, 150) 
-        self.collide_input_new_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect 
+        self.collide_input_new_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect
+        self.back_rect = pygame.Rect(1260, 820, 200, 100) 
+        self.collide_back = self.back_rect.collidepoint(self.pos)
+        self.save_rect = pygame.Rect(390, 820, 200, 100) 
+        self.collide_save = self.save_rect.collidepoint(self.pos)
 
-        self.screen.blit(self.close_button, (700,700))
-    def account_screen(self):
-        self.screen.fill(WHITE)
-        self.title_text = self.title_font.render('Account', True, (0, 0, 0))
-        self.screen.blit(self.title_text, (750,200))
-        self.screen.blit(self.start_button, (700,300))
-        self.start_rect = pygame.Rect(750, 300, 200, 150) # start button collsion rect
-        self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
+        # DEBUG
+        pygame.draw.rect(self.screen, RED, self.back_rect)
+        pygame.draw.rect(self.screen, RED, self.save_rect)
+    def account_choice_screen(self):
+        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
+        self.screen.blit(self.bg_plains, (0,0))
+        self.account_choice_panel = pygame.image.load("Assets/account_choice_panel.png").convert_alpha()
+        self.account_choice_panel = pygame.transform.scale(self.account_choice_panel, (1700,1100))
+        self.screen.blit(self.account_choice_panel, (280,50))
+        self.login_rect = pygame.Rect(550, 530, 200, 100) 
+        self.collide_login = self.login_rect.collidepoint(self.pos)
+        self.signin_rect = pygame.Rect(1020, 530, 200, 100) 
+        self.collide_signin = self.signin_rect.collidepoint(self.pos)
+        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
+        self.collide_back = self.back_rect.collidepoint(self.pos)
 
-        self.screen.blit(self.options_button, (700,500))
-        self.screen.blit(self.exit_button, (700,700))
+        # DEBUG
+        # pygame.draw.rect(self.screen, RED, self.back_rect)
+        # pygame.draw.rect(self.screen, RED, self.login_rect)
+        # pygame.draw.rect(self.screen, RED, self.signin_rect)
+    def account_login_screen(self):
+        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
+        self.screen.blit(self.bg_plains, (0,0))
+        self.account_login_panel = pygame.image.load("Assets/login_panel.png").convert_alpha()
+        self.account_login_panel = pygame.transform.scale(self.account_login_panel, (1700,1100))
+        self.screen.blit(self.account_login_panel, (280,50))
+        self.save_rect = pygame.Rect(470, 810, 200, 100) 
+        self.collide_save = self.save_rect.collidepoint(self.pos)
+        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
+        self.collide_back = self.back_rect.collidepoint(self.pos)
+
+        pygame.draw.rect(self.screen, RED, self.save_rect)
+    def account_signin_screen(self):
+        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
+        self.screen.blit(self.bg_plains, (0,0))
+        self.account_signin_panel = pygame.image.load("Assets/signup_panel.png").convert_alpha()
+        self.account_signin_panel = pygame.transform.scale(self.account_signin_panel, (1700,1100))
+        self.screen.blit(self.account_signin_panel, (280,50))
+        self.save_rect = pygame.Rect(470, 810, 200, 100) 
+        self.collide_save = self.save_rect.collidepoint(self.pos)
+        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
+        self.collide_back = self.back_rect.collidepoint(self.pos)
+
+        pygame.draw.rect(self.screen, RED, self.save_rect)
     def win_screen(self):
         self.screen.fill(WHITE)
         self.title_text = self.title_font.render('Win!', True, (0, 0, 0))
@@ -355,6 +408,13 @@ class Game:
         self.title_text = self.title_font.render('Loss!', True, (0, 0, 0))
         self.screen.blit(self.title_text, (750,400))
         # Add Try Again button
+    def back(self):
+        self.options_open = False
+        self.account_choice_open = False
+        self.account_login_open = False
+        self.account_signin_open = False
+        self.start_screen_active = True
+        self.collide_back = False
     def end_round(self):
         self.sorting_cards = False 
         self.done_base_sort = False
@@ -679,8 +739,16 @@ class Game:
                 # SCREEN MANAGEMENT
                 if self.start_screen_active:
                     self.start_screen()
+                if self.options_open:
+                    self.options_screen()
+                if self.account_choice_open:
+                    self.account_choice_screen()
+                if self.account_login_open:
+                    self.account_login_screen()
+                if self.account_signin_open:
+                    self.account_signin_screen()
                 # PLAY
-                elif self.play_screen_active:
+                if self.play_screen_active:
                     self.screen.fill(WHITE)
                     # End turn button
                     self.end_turn_button = pygame.transform.scale(self.end_turn_button, (1200,900))
@@ -1445,15 +1513,49 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN: 
                     print("\033[31mPRESSED\033[0m")
                     # LEFT CLICK
-                    if event.button == 1 and self.selected_card_count != 1:
+                    if event.button == 1:
                         self.pressing = True
-                        self.press_count += 1
-                        # Cursor colliding with start button
-                        if self.collide_start and self.start_screen_active: 
-                            self.loading = True
-                            # Switch to play screen
+                        # START SCREEEN
+                        if self.start_screen_active: 
+                            # Start button collision
+                            if self.collide_start:
+                                self.loading = True
+                                # Switch to play screen
+                                self.start_screen_active = False
+                                self.play_screen_active = True
+                        # Open options menu
+                        if self.collide_options:
+                            self.options_open = True
                             self.start_screen_active = False
-                            self.play_screen_active = True
+                            # Return back to previous screen
+                            if self.collide_back:
+                                self.back()
+                                print("BACK")
+                            print("OPTIONS")
+                        # Open account menu
+                        if self.collide_account:
+                            self.account_choice_open = True
+                            self.start_screen_active = False
+                            # Return back to previous screen
+                            if self.collide_back:
+                                self.back()
+                                print("BACK")
+                            print("ACCOUNT")
+                        # Sign in
+                        if self.collide_signin:
+                            self.account_choice_open = False
+                            self.collide_account = False
+                            self.account_signin_screen()
+                        # Log in
+                        if self.collide_login:
+                            self.account_choice_open = False
+                            self.collide_account = False
+                            self.account_login_screen()
+                        # Exit game
+                        if self.collide_exit:
+                            pygame.quit()
+                            sys.exit()
+
                         # Cards have already been generated and collisiosn have been checked earlier
                         if self.generated_cards and self.collisions_checked:
                             print("One")
@@ -1485,12 +1587,11 @@ class Game:
                                 i += 1
                     
                     # RIGHT CLICK
-                    elif event.button == 3 and self.card_selected_rect is None:
+                    elif event.button == 3:
                         print("Right click")
                         if self.colliding:
                             print("Past colliuding")
                             self.pressing = True
-                            self.press_count += 1
                             # Select first card
                             if self.first_card_to_combine is None:
                                 print("First card selected")
@@ -1508,31 +1609,16 @@ class Game:
                             elif self.first_card_to_combine is not None and self.card_to_collide is self.first_card_to_combine:
                                 print(self.card_to_collide)
                                 print(self.second_card_to_combine)
-                                print("Selecting same first card (NO)")
-                                # Reset valeus and unselect card
-                                card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
-                                card_to_change[11] = self.move_to_starting_pos_event
-                                card_to_change[12] = 0
-                                card_to_change[15] = False
-                                card_to_change[13] = False
-                                card_to_change[6] = False
-                                self.pressing = False
-                                pygame.event.post(self.move_to_starting_pos_event)
-                                self.combining = False
-
-                                self.card_selected = False
-                                self.selected_card = None
-                                self.card_selected_rect = None
-
-                                self.first_card_to_combine = None
-                                self.selected_card_count = 0
+                                print("Selecting same first card")
+                                self.first_card_to_combine[11] = self.cant_select_event
+                                pygame.event.post(self.cant_select_event)
                             elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
                                 # Set second card as card under cursor
                                 self.second_card_to_combine = self.card_to_collide
                                 print("Not same card and card only 1")
                                 # Selecting second card (for combining cards)
                                 # check if theyre the same type of card (Grasshopper for instance)
-                                if self.first_card_to_combine[1] == self.second_card_to_combine[1] and self.first_card_to_combine[1] is not 4:
+                                if self.first_card_to_combine[1] == self.second_card_to_combine[1]:
                                     print("Combinging!")
                                     # SELECT BOTH CARDS and COMBINE
                                     self.selected_card_count += 1 # how many cards have been selected in total
@@ -1548,43 +1634,13 @@ class Game:
                                     pygame.event.post(self.combine_event)
                                     
                                 else:
-                                    print("Not same two cards or Eagles both")
-                                    card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
-                                    card_to_change[11] = self.move_to_starting_pos_event
-                                    card_to_change[12] = 0
-                                    card_to_change[15] = False
-                                    card_to_change[13] = False
-                                    card_to_change[6] = False
-                                    self.pressing = False
-                                    pygame.event.post(self.move_to_starting_pos_event)
-                                    # Reset valeus and unselect card
-                                    self.combining = False
-
-                                    self.card_selected = False
-                                    self.selected_card = None
-                                    self.card_selected_rect = None
-                                    self.second_card_to_combine = None
-
-                                    self.first_card_to_combine = None
-                                    self.selected_card_count = 0
+                                    print("Not same two cards")
+                                    self.first_card_to_combine[11] = self.cant_select_event
+                                    pygame.event.post(self.cant_select_event)
                             elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
                                 print("Not same card and card 2")
-                                card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
-                                card_to_change[11] = self.move_to_starting_pos_event
-                                card_to_change[12] = 0
-                                card_to_change[15] = False
-                                card_to_change[13] = False
-                                card_to_change[6] = False
-                                
-                                pygame.event.post(self.move_to_starting_pos_event)
-                                # Reset valeus and unselect card
-                                self.combining = False
-
-                                self.card_selected = False
-                                self.selected_card = None
-                                self.card_selected_rect = None
-                                self.second_card_to_combine = None
-                                self.second_card_to_combine = None
+                                self.first_card_to_combine[11] = self.cant_select_event
+                                pygame.event.post(self.cant_select_event)
                                 # SHAKE CARD ANIMATION (CANT SELECT ANYMORE)
                             # i = 0
                             # while i < len(self.pc_cards): 
@@ -1604,12 +1660,6 @@ class Game:
                         #     i += 1
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False
-                print("Press count", self.press_count)
-                print(pygame.mouse.get_pressed()[0])
-                if self.press_count > 1:
-                    self.pressing = False
-                    self.press_count = 0
-                self.press_count += 1
                 # KEYDOWN events
                 if event.type == pygame.KEYDOWN:
                     # Quit game with escape key
