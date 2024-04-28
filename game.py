@@ -7,6 +7,10 @@ import collisions
 import animations
 import display
 import battle_logic
+import file_manager
+import screens
+import utilities
+import text_input
 # Constants
 WIDTH, HEIGHT = 1920, 1080
 FPS = 60
@@ -14,7 +18,8 @@ FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-BLUE = (0, 255, 0)
+BLUE = (0, 0, 255)
+GREY = (128, 128, 128)
 UNSELECTABLE = 180
 
 HOVER_RUN_COUNT = 5
@@ -48,6 +53,8 @@ class Game:
         self.title_font = pygame.font.SysFont('Arial', 50)
 
         self.clock = pygame.time.Clock()
+
+        self.py = pygame # For other classes to refrence outside of this class
 
         # Events (mostly for animations)
         self.hover_e = pygame.USEREVENT + 1
@@ -104,9 +111,7 @@ class Game:
         self.account_choice_open = False
         self.account_login_open = False
         self.account_signin_open = False
-        self.collide_login = False
-        self.collide_signin = False
-        self.collide_back = False
+        
         self.round_count = 1 # What round it is numerically?
         self.turn_count = 1
         self.sorted_at_turn_start = False
@@ -124,6 +129,20 @@ class Game:
         self.player_battled_all_cards_count = 0
         self.no_cards_attacked_yet = True
         self.already_sorted_at_start = False
+        self.user_name_text = ""
+        self.user_password_text = ""
+        self.max_card_count_text = "6"
+        self.new_card_count_text = "1"
+        self.bg_choice = 'plains'
+        self.music_volume_text = "100"
+        self.sfx_volume_text = "100"
+        self.typing_name = False
+        self.typing_password = False
+        self.typing_max_card_count = False
+        self.typing_new_card_count = False
+        self.typing_music_volume = False
+        self.typing_sfx_volume = False
+        
         self.added_new_cards = False # Whether we have added new cards to each deck each turn
         self.selected_card_count = 0 # How many cards are currently selected (for fighting and combining)
         self.player_turn = True # If this round is the player's turn, then True, if pc turn, then False
@@ -148,6 +167,10 @@ class Game:
         # Tuples
         self.p_colliding_with_card = ()
         self.pc_colliding_with_card= ()
+
+        # IMAGES
+        self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
+        self.end_turn_button = pygame.transform.scale(self.end_turn_button, (1200,900))
 
         
     def generate_cards(self, count_to_generate):
@@ -301,121 +324,6 @@ class Game:
             x += CARD_SPACING
         self.generated_cards = True
         self.added_new_cards = True
-
-    def start_screen(self):
-        # Background
-        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
-        self.screen.blit(self.bg_plains, (0,0))
-        # IMAGES
-        self.start_button = pygame.image.load("Assets/start_button.png").convert_alpha()
-        self.options_button = pygame.image.load("Assets/options_button.png").convert_alpha()
-        self.account_button = pygame.image.load("Assets/account_button.png").convert_alpha()
-        self.exit_button = pygame.image.load("Assets/exit_button.png").convert_alpha()
-        self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
-        self.logo = pygame.image.load("Assets/logo.png").convert_alpha()
-        
-
-        self.start_button = pygame.transform.scale(self.start_button, (1200,900))
-        self.options_button = pygame.transform.scale(self.options_button, (1200,900))
-        self.account_button = pygame.transform.scale(self.account_button, (1200,900))
-        self.exit_button = pygame.transform.scale(self.exit_button, (1200,900))
-
-        self.screen.blit(self.logo, (600,150))
-        self.screen.blit(self.start_button, (790,440))
-        self.screen.blit(self.options_button, (790,560))
-        self.screen.blit(self.account_button, (790,680))
-        self.screen.blit(self.exit_button, (830,820))
-        
-
-        self.start_rect = pygame.Rect(790, 440, 220, 150) # start button collsion rect
-        self.collide_start = self.start_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
-        self.options_rect = pygame.Rect(790,560, 220, 150) # start button collsion rect
-        self.collide_options = self.options_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
-        self.account_rect = pygame.Rect(790,680, 220, 150) # start button collsion rect
-        self.collide_account = self.account_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
-        self.exit_rect = pygame.Rect(830,820, 220, 150) # start button collsion rect
-        self.collide_exit = self.exit_rect.collidepoint(self.pos) # check if cursor is over rect (start button)
-    def options_screen(self):
-        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
-        self.screen.blit(self.bg_plains, (0,0))
-        self.options_panel = pygame.image.load("Assets/options_panel.png").convert_alpha()
-        self.options_panel = pygame.transform.scale(self.options_panel, (1700,1100))
-        self.screen.blit(self.options_panel, (280,60))
-        self.options_panel = pygame.transform.scale(self.options_panel, (1200,900))
-        self.max_card_amount_text = self.title_font.render('Max card amount: ', True, (0, 0, 0))
-        self.new_cards_each_round_text = self.title_font.render('New cards each round: ', True, (0, 0, 0))
-        self.title_text = self.title_font.render('Options', True, (0, 0, 0))
-        # Text input system
-        self.input_rect_max_card = pygame.Rect(710, 500, 200, 150) 
-        self.collide_input_max_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect 
-        self.input_rect_new_card = pygame.Rect(710, 500, 200, 150) 
-        self.collide_input_new_card = self.start_rect.collidepoint(self.pos) # check if cursor is over rect
-        self.back_rect = pygame.Rect(1260, 820, 200, 100) 
-        self.collide_back = self.back_rect.collidepoint(self.pos)
-        self.save_rect = pygame.Rect(390, 820, 200, 100) 
-        self.collide_save = self.save_rect.collidepoint(self.pos)
-
-        # DEBUG
-        pygame.draw.rect(self.screen, RED, self.back_rect)
-        pygame.draw.rect(self.screen, RED, self.save_rect)
-    def account_choice_screen(self):
-        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
-        self.screen.blit(self.bg_plains, (0,0))
-        self.account_choice_panel = pygame.image.load("Assets/account_choice_panel.png").convert_alpha()
-        self.account_choice_panel = pygame.transform.scale(self.account_choice_panel, (1700,1100))
-        self.screen.blit(self.account_choice_panel, (280,50))
-        self.login_rect = pygame.Rect(550, 530, 200, 100) 
-        self.collide_login = self.login_rect.collidepoint(self.pos)
-        self.signin_rect = pygame.Rect(1020, 530, 200, 100) 
-        self.collide_signin = self.signin_rect.collidepoint(self.pos)
-        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
-        self.collide_back = self.back_rect.collidepoint(self.pos)
-
-        # DEBUG
-        # pygame.draw.rect(self.screen, RED, self.back_rect)
-        # pygame.draw.rect(self.screen, RED, self.login_rect)
-        # pygame.draw.rect(self.screen, RED, self.signin_rect)
-    def account_login_screen(self):
-        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
-        self.screen.blit(self.bg_plains, (0,0))
-        self.account_login_panel = pygame.image.load("Assets/login_panel.png").convert_alpha()
-        self.account_login_panel = pygame.transform.scale(self.account_login_panel, (1700,1100))
-        self.screen.blit(self.account_login_panel, (280,50))
-        self.save_rect = pygame.Rect(470, 810, 200, 100) 
-        self.collide_save = self.save_rect.collidepoint(self.pos)
-        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
-        self.collide_back = self.back_rect.collidepoint(self.pos)
-
-        pygame.draw.rect(self.screen, RED, self.save_rect)
-    def account_signin_screen(self):
-        self.bg_plains = pygame.image.load("Assets/bg_plains.png").convert_alpha()
-        self.screen.blit(self.bg_plains, (0,0))
-        self.account_signin_panel = pygame.image.load("Assets/signup_panel.png").convert_alpha()
-        self.account_signin_panel = pygame.transform.scale(self.account_signin_panel, (1700,1100))
-        self.screen.blit(self.account_signin_panel, (280,50))
-        self.save_rect = pygame.Rect(470, 810, 200, 100) 
-        self.collide_save = self.save_rect.collidepoint(self.pos)
-        self.back_rect = pygame.Rect(1260, 830, 200, 100) 
-        self.collide_back = self.back_rect.collidepoint(self.pos)
-
-        pygame.draw.rect(self.screen, RED, self.save_rect)
-    def win_screen(self):
-        self.screen.fill(WHITE)
-        self.title_text = self.title_font.render('Win!', True, (0, 0, 0))
-        self.screen.blit(self.title_text, (750,400))
-        # Add PLAY MORE button
-    def loss_screen(self):
-        self.screen.fill(WHITE)
-        self.title_text = self.title_font.render('Loss!', True, (0, 0, 0))
-        self.screen.blit(self.title_text, (750,400))
-        # Add Try Again button
-    def back(self):
-        self.options_open = False
-        self.account_choice_open = False
-        self.account_login_open = False
-        self.account_signin_open = False
-        self.start_screen_active = True
-        self.collide_back = False
     def end_round(self):
         self.sorting_cards = False 
         self.done_base_sort = False
@@ -454,6 +362,7 @@ class Game:
                 self.player_cards[i][2] = new_card[2]
                 # convert/scale card image
                 self.player_cards[i][3] = pygame.image.load(new_card[2])
+                
                 self.player_cards[i][3].convert_alpha()
                 self.player_cards[i][3] = pygame.transform.scale(self.player_cards[i][3], (1000,900))
                 print("NEW player cards", str(self.player_cards[i]))
@@ -613,6 +522,8 @@ class Game:
             self.displaying = False # For checking when a new frame was just made
             # ! Make this check EVERY card, not just one and use that for every other list card
             self.pos = pygame.mouse.get_pos() # Cursor position
+
+            screens_obj = screens.Screens(self.py, self.screen, self.pos, self.user_name_text, self.user_password_text, self.typing_name, self.typing_password, self.typing_max_card_count, self.typing_new_card_count, self.typing_music_volume, self.typing_sfx_volume, self.max_card_count_text, self.new_card_count_text, self.music_volume_text, self.sfx_volume_text)
             if self.display_turn is False and self.won is False and self.lost is False: # If not doing display_turn animation currently
                 # COLLISION
                 if self.generated_cards: # If card have already been generated
@@ -739,20 +650,20 @@ class Game:
                 # START
                 # SCREEN MANAGEMENT
                 if self.start_screen_active:
-                    self.start_screen()
+                    screens_obj.start_screen()
                 if self.options_open:
-                    self.options_screen()
+                    screens_obj.options_screen()
                 if self.account_choice_open:
-                    self.account_choice_screen()
+                    screens_obj.account_choice_screen()
                 if self.account_login_open:
-                    self.account_login_screen()
+                    screens_obj.account_login_screen()
                 if self.account_signin_open:
-                    self.account_signin_screen()
+                    screens_obj.account_signin_screen()
                 # PLAY
                 if self.play_screen_active:
                     self.screen.fill(WHITE)
                     # End turn button
-                    self.end_turn_button = pygame.transform.scale(self.end_turn_button, (1200,900))
+                    
                     self.screen.blit(self.end_turn_button, (25,850))
                     self.end_turn_button_rect = pygame.Rect(150, 800, 200, 150) # end turn collsion rect
                     self.collide_end_turn_button = self.end_turn_button_rect.collidepoint(self.pos) # check if cursor is over rect (end turn button)
@@ -773,10 +684,10 @@ class Game:
                     #         Game.sort_cards(self) # sort cards before turn start for safety (in case a new card is added)
                 # WIN
                 elif self.win_screen_active:
-                    return
+                    screens_obj.win_screen()
                 # LOSE
                 elif self.lose_screen_active:
-                    return
+                    screens_obj.lose_screen()
                 # DISPLAY OBJECTS
                 display.Display.display_objects(self)
                 # DISPLAY DEBUG MODE OBJECTS
@@ -965,6 +876,9 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                # For text input
+                if event.type == pygame.KEYDOWN:
+                    text_input.Text_Input.write_text(self, self.py, event, self.typing_name, self.typing_password, self.typing_max_card_count, self.typing_new_card_count, self.typing_music_volume, self.typing_sfx_volume, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.music_volume_text, self.sfx_volume_text)
                 
                 # Animations
                 # if card hovering called and still should be animating this card, also if currently colliding with something
@@ -1000,11 +914,14 @@ class Game:
                                 elif self.combined_cards:
                                     # If card just combined, move this card above other cards till gets to new position
                                     if cardd[16] is True:
+                                        print("\033[31mOLD position\033[0m", [cardd[5].x, cardd[5].y])
+                                        print("\033[31mnew position\033[0m", [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50])
                                         animations.Animations.move_to_starting_pos(self, cardd, False, [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50])
                                         if [cardd[5].x, cardd[5].y]  == [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50]: # If card at the new postiiton
                                             cardd[16] = False
                                             print("Yahoo")
                                     else:
+                                        print("NOT just combined")
                                         animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
                                     cardd[12] += 1
                                 else:
@@ -1150,6 +1067,7 @@ class Game:
                                 self.player_cards[index][3] = pygame.transform.scale(self.player_cards[index][3], (1000,900))
 
                                 self.player_cards[index][11] = None
+                                self.player_cards[index][16] = True
 
                                 # Redefine card in object list with new values
                                 print("obj to r", obj_to_redefine)
@@ -1515,46 +1433,158 @@ class Game:
                     print("\033[31mPRESSED\033[0m")
                     # LEFT CLICK
                     if event.button == 1 and self.selected_card_count != 1:
-                        self.pressing = True
-                        self.press_count += 1
+                        if self.pressing is False:
+                            self.press_count += 1
+                            self.pressing = True
                         # START SCREEEN
                         if self.start_screen_active: 
+                            print("START")
                             # Start button collision
-                            if self.collide_start:
+                            if screens_obj.collide_start:
                                 self.loading = True
                                 # Switch to play screen
                                 self.start_screen_active = False
                                 self.play_screen_active = True
                         # Open options menu
-                        if self.collide_options:
+                        if screens_obj.collide_options:
+                            print("OPTIONS")
                             self.options_open = True
+                            self.account_choice_open = False
                             self.start_screen_active = False
                             # Return back to previous screen
-                            if self.collide_back:
-                                self.back()
+                        if self.options_open:
+                            if screens_obj.collide_back:
+                                self.options_open = False
+                                self.account_choice_open = False
+                                self.account_login_open = False
+                                self.account_signin_open = False
+                                self.start_screen_active = True
+                                screens_obj.back()
                                 print("BACK")
-                            print("OPTIONS")
+                            if screens_obj.collide_save_options:
+                                print("CHANGE OPTIONS")
+                                file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.bg_choice, self.music_volume_text, self.sfx_volume_text)
+                            if screens_obj.collide_input_max_card:
+                                self.typing_name = False
+                                self.typing_password = False
+                                self.typing_max_card_count = True
+                                self.typing_new_card_count = False
+                                self.typing_music_volume = False
+                                self.typing_sfx_volume = False
+                            if screens_obj.collide_input_new_card:
+                                self.typing_name = False
+                                self.typing_password = False
+                                self.typing_max_card_count = False
+                                self.typing_new_card_count = True
+                                self.typing_music_volume = False
+                                self.typing_sfx_volume = False
+                            if screens_obj.collide_input_rect_music:
+                                self.typing_name = False
+                                self.typing_password = False
+                                self.typing_max_card_count = False
+                                self.typing_new_card_count = False
+                                self.typing_music_volume = True
+                                self.typing_sfx_volume = False
+                            if screens_obj.collide_input_rect_sfx:
+                                self.typing_name = False
+                                self.typing_password = False
+                                self.typing_max_card_count = False
+                                self.typing_new_card_count = False
+                                self.typing_music_volume = False
+                                self.typing_sfx_volume = True
+                            if screens_obj.collide_input_rect_bg1:
+                                self.bg_choice = 'plains'
+                            if screens_obj.collide_input_rect_bg2:
+                                self.bg_choice = 'desert'
+                            if screens_obj.collide_input_rect_bg3:
+                                self.bg_choice = 'jungle'
                         # Open account menu
-                        if self.collide_account:
+                        if screens_obj.collide_account:
+                            print("ACCOUNT")
+                            self.options_open = False
                             self.account_choice_open = True
                             self.start_screen_active = False
                             # Return back to previous screen
-                            if self.collide_back:
-                                self.back()
-                                print("BACK")
-                            print("ACCOUNT")
+                        if screens_obj.collide_back and self.account_choice_open:
+                            self.options_open = False
+                            self.account_choice_open = False
+                            self.account_login_open = False
+                            self.account_signin_open = False
+                            self.start_screen_active = True
+                            screens_obj.back()
+                            print("BACK")
+                        elif screens_obj.collide_save_options:
+                            return 1
+                                # file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password, )
+                            
                         # Sign in
-                        if self.collide_signin:
+                        if screens_obj.collide_signin:
                             self.account_choice_open = False
                             self.collide_account = False
-                            self.account_signin_screen()
+                            self.account_signin_open = True
+                            self.account_login_open = False
+                            screens_obj.account_signin_screen()
+                        if self.account_signin_open:
+                            if screens_obj.collide_name_input:
+                                print()
+                                self.typing_name = True
+                                self.typing_password = False
+                                self.typing_max_card_count = False
+                                self.typing_new_card_count = False
+                                self.typing_music_volume = False
+                                self.typing_sfx_volume = False
+                            if screens_obj.collide_password_input:
+                                self.typing_name = False
+                                self.typing_password = True
+                                self.typing_max_card_count = False
+                                self.typing_new_card_count = False
+                                self.typing_music_volume = False
+                                self.typing_sfx_volume = False
+                            # Return back to previous screen
+                            if screens_obj.collide_back:
+                                self.options_open = False
+                                self.account_choice_open = False
+                                self.account_login_open = False
+                                self.account_signin_open = False
+                                self.start_screen_active = True
+                                screens_obj.back()
+                                print("BACK")
+                            # Pressing save button
+                            if screens_obj.collide_save_account:
+                                print("SAVE")
+                                file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
                         # Log in
-                        if self.collide_login:
+                        if screens_obj.collide_login:
+                            print("LOGIN 1st")
                             self.account_choice_open = False
                             self.collide_account = False
-                            self.account_login_screen()
+                            self.account_login_open = True
+                            self.account_signin_open = False
+                            screens_obj.account_login_screen()
+                            # Return back to previous screen
+                        if self.account_login_open:
+                            if screens_obj.collide_back:
+                                self.options_open = False
+                                self.account_choice_open = False
+                                self.account_login_open = False
+                                self.account_signin_open = False
+                                self.start_screen_active = True
+                                screens_obj.back()
+                                print("BACK T")
+                            # Pressing name input text box
+                            elif screens_obj.collide_name_input:
+                                self.typing_name = True
+                                self.typing_password = False
+                            # Pressing password input text box
+                            elif screens_obj.collide_password_input:
+                                self.typing_password = True
+                                self.typing_name = False
+                            # Pressing login button
+                            elif screens_obj.collide_save_login:
+                                print("FILE LOGIN")
+                                file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
                         # Exit game
-                        if self.collide_exit:
+                        if screens_obj.collide_exit:
                             pygame.quit()
                             sys.exit()
 
@@ -1593,8 +1623,10 @@ class Game:
                         print("Right click")
                         if self.colliding:
                             print("Past colliuding")
-                            self.pressing = True
-                            self.press_count += 1
+                            if self.pressing is False:
+                                self.press_count += 1
+                                self.pressing = True
+                            
                             # Select first card
                             if self.first_card_to_combine is None:
                                 print("First card selected")
@@ -1708,12 +1740,9 @@ class Game:
                         #     i += 1
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False
+                    self.press_count = 0
                 print("Press count", self.press_count)
                 print(pygame.mouse.get_pressed()[0])
-                if self.press_count > 1:
-                    self.pressing = False
-                    self.press_count = 0
-                self.press_count += 1
                 # KEYDOWN events
                 if event.type == pygame.KEYDOWN:
                     # Quit game with escape key
