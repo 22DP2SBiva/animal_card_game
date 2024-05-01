@@ -11,6 +11,9 @@ import file_manager
 import screens
 import utilities
 import text_input
+import ui_collision
+# dependencies: pygame
+
 # Constants
 WIDTH, HEIGHT = 1920, 1080
 FPS = 60
@@ -54,6 +57,8 @@ class Game:
 
         self.clock = pygame.time.Clock()
 
+        pygame.mixer.init()
+
         self.py = pygame # For other classes to refrence outside of this class
 
         # Events (mostly for animations)
@@ -78,7 +83,7 @@ class Game:
         # Animation handling variables
         self.animated_count = 0
         self.colliding = False # is the cursor colliding with a card?
-        self.run_count = 10 # how many frames the animation should run for
+        self.run_count = 230 # how many frames the animation should run for
 
 
         # Booleans to track current screen state
@@ -129,13 +134,15 @@ class Game:
         self.player_battled_all_cards_count = 0
         self.no_cards_attacked_yet = True
         self.already_sorted_at_start = False
+        self.logged_in = False
+        self.user = "Guest"
         self.user_name_text = ""
         self.user_password_text = ""
         self.max_card_count_text = "6"
         self.new_card_count_text = "1"
-        self.bg_choice = 'plains'
-        self.music_volume_text = "100"
-        self.sfx_volume_text = "100"
+        self.bg_choice = "plains"
+        self.music_volume_text = "20"
+        self.sfx_volume_text = "20"
         self.typing_name = False
         self.typing_password = False
         self.typing_max_card_count = False
@@ -153,6 +160,8 @@ class Game:
         self.display_turn = False # For checking if turn dispaly animation playing
         self.first_card_to_combine = None# First card to combine
         self.second_card_to_combine = None# Second card to combine
+        self.options_changed = False
+        self.sort_by_high = True
 
         # Lists
         self.debug_rects = []
@@ -168,9 +177,25 @@ class Game:
         self.p_colliding_with_card = ()
         self.pc_colliding_with_card= ()
 
+        
+
         # IMAGES
         self.end_turn_button = pygame.image.load("Assets/end_turn.png").convert_alpha()
         self.end_turn_button = pygame.transform.scale(self.end_turn_button, (1200,900))
+
+        # SOUNDS
+        self.click_sound = pygame.mixer.Sound('Sounds/click.ogg')
+        self.toggle_sound = pygame.mixer.Sound('Sounds/toggle.ogg')
+        self.switch_sound = pygame.mixer.Sound('Sounds/switch.ogg')
+        self.cant_select_sound = pygame.mixer.Sound('Sounds/cant_select.ogg')
+        self.new_round_sound = pygame.mixer.Sound('Sounds/new_round.ogg')
+        self.cant_select_sound = pygame.mixer.Sound('Sounds/cant_select.ogg')
+        self.card_fan_sound = pygame.mixer.Sound('Sounds/cardFan1.ogg')
+        self.card_place_sound = pygame.mixer.Sound('Sounds/cardPlace1.ogg')
+        self.card_shove_sound = pygame.mixer.Sound('Sounds/cardShove4.ogg')
+        self.card_slide_sound = pygame.mixer.Sound('Sounds/cardSlide4.ogg')
+
+        self.music_playing = ""
 
         
     def generate_cards(self, count_to_generate):
@@ -522,8 +547,26 @@ class Game:
             self.displaying = False # For checking when a new frame was just made
             # ! Make this check EVERY card, not just one and use that for every other list card
             self.pos = pygame.mouse.get_pos() # Cursor position
-
-            screens_obj = screens.Screens(self.py, self.screen, self.pos, self.user_name_text, self.user_password_text, self.typing_name, self.typing_password, self.typing_max_card_count, self.typing_new_card_count, self.typing_music_volume, self.typing_sfx_volume, self.max_card_count_text, self.new_card_count_text, self.music_volume_text, self.sfx_volume_text)
+            # If currently not re-inputting account data, then change current options settings to this accounts settings
+            if self.options_open is False:
+                if self.typing_name is False and self.typing_password is False:
+                    options = file_manager.File_Manager.get_options(self, self.user_name_text, self.user_password_text)
+                    print("user", self.user_name_text, self.user_password_text)
+                    # Guest user
+                    if self.user_name_text == "" and self.user_password_text == "":
+                        self.max_card_count_text = options[1][2]
+                        self.new_card_count_text = options[1][3]
+                        self.bg_choice = options[1][4]
+                        self.music_volume_text = options[1][5]
+                        self.sfx_volume_text = options[1][6]
+                    # Registered user
+                    elif self.user_name_text != "" and self.user_password_text != "" and self.options_changed is True:
+                        print(options)
+                        self.max_card_count_text = options[2]
+                        self.new_card_count_text = options[3]
+                        self.bg_choice = options[4]
+                        self.music_volume_text = options[5]
+                        self.sfx_volume_text = options[6]
             if self.display_turn is False and self.won is False and self.lost is False: # If not doing display_turn animation currently
                 # COLLISION
                 if self.generated_cards: # If card have already been generated
@@ -650,18 +693,34 @@ class Game:
                 # START
                 # SCREEN MANAGEMENT
                 if self.start_screen_active:
-                    screens_obj.start_screen()
+                    # If not playing background music, then play
+                    if pygame.mixer.music.get_busy() is False or self.music_playing is not "menu":
+                        pygame.mixer.music.load('Sounds/menu.mp3')
+                        pygame.mixer.music.play(-1)
+                        pygame.mixer.music.set_volume(float(self.music_volume_text)/100)
+                        self.music_playing = "menu"
+                    screens.Screens.start_screen(self, self.logged_in, self.user)
                 if self.options_open:
-                    screens_obj.options_screen()
+                    screens.Screens.options_screen(self, self.logged_in, self.user)
                 if self.account_choice_open:
-                    screens_obj.account_choice_screen()
+                    screens.Screens.account_choice_screen(self, self.logged_in, self.user)
                 if self.account_login_open:
-                    screens_obj.account_login_screen()
+                    screens.Screens.account_login_screen(self, self.logged_in, self.user)
                 if self.account_signin_open:
-                    screens_obj.account_signin_screen()
+                    screens.Screens.account_signin_screen(self, self.logged_in, self.user)
                 # PLAY
                 if self.play_screen_active:
-                    self.screen.fill(WHITE)
+                    if pygame.mixer.music.get_busy() is False or self.music_playing is not "play1":
+                        pygame.mixer.music.load('Sounds/play1.mp3')
+                        pygame.mixer.music.play(-1)
+                        pygame.mixer.music.set_volume(float(self.music_volume_text)/100)
+                        self.music_playing = "play1"
+                    if self.bg_choice == "plains":
+                        self.screen.blit(screens.Screens.plains, (0,0))
+                    elif self.bg_choice == "desert":
+                        self.screen.blit(screens.Screens.desert, (0,0))
+                    elif self.bg_choice == "jungle":
+                        self.screen.blit(screens.Screens.jungle, (0,0))
                     # End turn button
                     
                     self.screen.blit(self.end_turn_button, (25,850))
@@ -684,10 +743,10 @@ class Game:
                     #         Game.sort_cards(self) # sort cards before turn start for safety (in case a new card is added)
                 # WIN
                 elif self.win_screen_active:
-                    screens_obj.win_screen()
+                    screens.Screens.win_screen(self)
                 # LOSE
                 elif self.lose_screen_active:
-                    screens_obj.lose_screen()
+                    screens.Screens.lose_screen(self)
                 # DISPLAY OBJECTS
                 display.Display.display_objects(self)
                 # DISPLAY DEBUG MODE OBJECTS
@@ -874,6 +933,7 @@ class Game:
             for event in pygame.event.get():
                 # Close window
                 if event.type == pygame.QUIT:
+                    print("EXIT GAME QUIT")
                     pygame.quit()
                     sys.exit()
                 # For text input
@@ -892,6 +952,7 @@ class Game:
                             if cardd[12] == self.run_count:
                                 # Disable event
                                 cardd[12] = 0
+                                self.run_count = 230
                             else:
                                 animations.Animations.card_hover(self, cardd)
                                 cardd[12] += 1
@@ -1440,100 +1501,131 @@ class Game:
                         if self.start_screen_active: 
                             print("START")
                             # Start button collision
-                            if screens_obj.collide_start:
+                            if screens.Screens.collide_start:
+                                self.click_sound.play()
                                 self.loading = True
                                 # Switch to play screen
                                 self.start_screen_active = False
                                 self.play_screen_active = True
+                            if screens.Screens.collide_sort_highest:
+                                self.click_sound.play()
+                                self.sort_by_high = True
+                            if screens.Screens.collide_sort_lowest:
+                                self.click_sound.play()
+                                self.sort_by_high = False
                         # Open options menu
-                        if screens_obj.collide_options:
+                        if screens.Screens.collide_options:
                             print("OPTIONS")
+                            self.click_sound.play()
                             self.options_open = True
                             self.account_choice_open = False
                             self.start_screen_active = False
                             # Return back to previous screen
                         if self.options_open:
-                            if screens_obj.collide_back:
+                            if screens.Screens.collide_back:
+                                self.switch_sound.play()
                                 self.options_open = False
                                 self.account_choice_open = False
                                 self.account_login_open = False
                                 self.account_signin_open = False
                                 self.start_screen_active = True
-                                screens_obj.back()
+                                screens.Screens.back(self)
                                 print("BACK")
-                            if screens_obj.collide_save_options:
+                            if screens.Screens.collide_save_options:
                                 print("CHANGE OPTIONS")
+                                self.new_round_sound.play()
                                 file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.bg_choice, self.music_volume_text, self.sfx_volume_text)
-                            if screens_obj.collide_input_max_card:
+                                screens.Screens.collide_save_options = False
+                                if self.user_name_text != "":
+                                    self.options_changed = True
+                                pygame.mixer.music.set_volume(float(self.music_volume_text)/100)
+                                # SAVED text show
+                                self.saved_font = pygame.font.SysFont('Arial', 50, True, True)
+                                self.saved_surface = self.saved_font.render("SAVED", True, (150,255,150), GREY)
+                                self.screen.blit(self.saved_surface, (600, 840))
+                                pygame.display.update()
+                                pygame.time.delay(500)
+                            if screens.Screens.collide_input_max_card:
+                                self.toggle_sound.play()
                                 self.typing_name = False
                                 self.typing_password = False
                                 self.typing_max_card_count = True
                                 self.typing_new_card_count = False
                                 self.typing_music_volume = False
                                 self.typing_sfx_volume = False
-                            if screens_obj.collide_input_new_card:
+                            if screens.Screens.collide_input_new_card:
+                                self.toggle_sound.play()
                                 self.typing_name = False
                                 self.typing_password = False
                                 self.typing_max_card_count = False
                                 self.typing_new_card_count = True
                                 self.typing_music_volume = False
                                 self.typing_sfx_volume = False
-                            if screens_obj.collide_input_rect_music:
+                            if screens.Screens.collide_input_rect_music:
+                                self.toggle_sound.play()
                                 self.typing_name = False
                                 self.typing_password = False
                                 self.typing_max_card_count = False
                                 self.typing_new_card_count = False
                                 self.typing_music_volume = True
                                 self.typing_sfx_volume = False
-                            if screens_obj.collide_input_rect_sfx:
+                            if screens.Screens.collide_input_rect_sfx:
+                                self.toggle_sound.play()
                                 self.typing_name = False
                                 self.typing_password = False
                                 self.typing_max_card_count = False
                                 self.typing_new_card_count = False
                                 self.typing_music_volume = False
                                 self.typing_sfx_volume = True
-                            if screens_obj.collide_input_rect_bg1:
+                            if screens.Screens.collide_input_rect_bg1:
+                                self.toggle_sound.play()
                                 self.bg_choice = 'plains'
-                            if screens_obj.collide_input_rect_bg2:
+                            if screens.Screens.collide_input_rect_bg2:
+                                self.toggle_sound.play()
                                 self.bg_choice = 'desert'
-                            if screens_obj.collide_input_rect_bg3:
+                            if screens.Screens.collide_input_rect_bg3:
+                                self.toggle_sound.play()
                                 self.bg_choice = 'jungle'
                         # Open account menu
-                        if screens_obj.collide_account:
+                        if screens.Screens.collide_account:
                             print("ACCOUNT")
+                            self.click_sound.play()
                             self.options_open = False
                             self.account_choice_open = True
                             self.start_screen_active = False
                             # Return back to previous screen
-                        if screens_obj.collide_back and self.account_choice_open:
+                        if screens.Screens.collide_back and self.account_choice_open:
+                            self.switch_sound.play()
                             self.options_open = False
                             self.account_choice_open = False
                             self.account_login_open = False
                             self.account_signin_open = False
                             self.start_screen_active = True
-                            screens_obj.back()
+                            screens.Screens.back(self)
                             print("BACK")
-                        elif screens_obj.collide_save_options:
+                        elif screens.Screens.collide_save_options:
                             return 1
                                 # file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password, )
                             
                         # Sign in
-                        if screens_obj.collide_signin:
+                        if screens.Screens.collide_signin:
+                            self.click_sound.play()
                             self.account_choice_open = False
-                            self.collide_account = False
+                            screens.Screens.collide_account = False
                             self.account_signin_open = True
                             self.account_login_open = False
-                            screens_obj.account_signin_screen()
+                            screens.Screens.account_signin_screen(self, self.logged_in, self.user)
                         if self.account_signin_open:
-                            if screens_obj.collide_name_input:
-                                print()
+                            if screens.Screens.collide_name_input:
+                                self.toggle_sound.play()
                                 self.typing_name = True
                                 self.typing_password = False
                                 self.typing_max_card_count = False
                                 self.typing_new_card_count = False
                                 self.typing_music_volume = False
                                 self.typing_sfx_volume = False
-                            if screens_obj.collide_password_input:
+                            if screens.Screens.collide_password_input:
+                                self.toggle_sound.play()
                                 self.typing_name = False
                                 self.typing_password = True
                                 self.typing_max_card_count = False
@@ -1541,50 +1633,96 @@ class Game:
                                 self.typing_music_volume = False
                                 self.typing_sfx_volume = False
                             # Return back to previous screen
-                            if screens_obj.collide_back:
+                            if screens.Screens.collide_back:
+                                self.switch_sound.play()
                                 self.options_open = False
                                 self.account_choice_open = False
                                 self.account_login_open = False
                                 self.account_signin_open = False
                                 self.start_screen_active = True
-                                screens_obj.back()
+                                screens.Screens.back(self)
                                 print("BACK")
                             # Pressing save button
-                            if screens_obj.collide_save_account:
+                            if screens.Screens.collide_save_account:
                                 print("SAVE")
-                                file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
+                                self.new_round_sound.play()
+                                result = file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
+                                if result == "ACCOUNT ADDED":
+                                    self.saved_font = pygame.font.SysFont('Arial', 40, True, True)
+                                    self.saved_surface = self.saved_font.render("ADDED ACCOUNT", True, (150,255,150), GREY)
+                                    self.screen.blit(self.saved_surface, (660, 830))
+                                    pygame.display.update()
+                                    pygame.time.delay(500)
+                                    self.logged_in = True
+                                    self.user = self.user_name_text
+                                elif result == "ACCOUNT ALREADY EXISTS":
+                                    self.saved_font = pygame.font.SysFont('Arial', 30, True, True)
+                                    self.saved_surface = self.saved_font.render("ACCOUNT ALREADY EXISTS", True, (150,255,150), GREY)
+                                    self.screen.blit(self.saved_surface, (660, 840))
+                                    pygame.display.update()
+                                    pygame.time.delay(500)
+                                elif result == "EMPTY TEXT":
+                                    self.saved_font = pygame.font.SysFont('Arial', 30, True, True)
+                                    self.saved_surface = self.saved_font.render("EMPTY", True, (150,255,150), GREY)
+                                    self.screen.blit(self.saved_surface, (660, 840))
+                                    pygame.display.update()
+                                    pygame.time.delay(500)
+                                
                         # Log in
-                        if screens_obj.collide_login:
+                        if screens.Screens.collide_login:
                             print("LOGIN 1st")
+                            self.click_sound.play()
                             self.account_choice_open = False
-                            self.collide_account = False
+                            screens.Screens.collide_account = False
                             self.account_login_open = True
                             self.account_signin_open = False
-                            screens_obj.account_login_screen()
+                            screens.Screens.account_login_screen(self, self.logged_in, self.user)
                             # Return back to previous screen
                         if self.account_login_open:
-                            if screens_obj.collide_back:
+                            if screens.Screens.collide_back:
+                                self.switch_sound.play()
                                 self.options_open = False
                                 self.account_choice_open = False
                                 self.account_login_open = False
                                 self.account_signin_open = False
                                 self.start_screen_active = True
-                                screens_obj.back()
+                                screens.Screens.back(self)
                                 print("BACK T")
                             # Pressing name input text box
-                            elif screens_obj.collide_name_input:
+                            elif screens.Screens.collide_name_input:
+                                self.toggle_sound.play()
                                 self.typing_name = True
                                 self.typing_password = False
                             # Pressing password input text box
-                            elif screens_obj.collide_password_input:
+                            elif screens.Screens.collide_password_input:
+                                self.toggle_sound.play()
                                 self.typing_password = True
                                 self.typing_name = False
                             # Pressing login button
-                            elif screens_obj.collide_save_login:
+                            elif screens.Screens.collide_save_login:
                                 print("FILE LOGIN")
-                                file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
+                                self.new_round_sound.play()
+                                result = file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
+                                if result == "LOGGED IN":
+                                    self.saved_font = pygame.font.SysFont('Arial', 40, True, True)
+                                    self.saved_surface = self.saved_font.render("LOGGED IN", True, (150,255,150), GREY)
+                                    self.screen.blit(self.saved_surface, (660, 830))
+                                    pygame.display.update()
+                                    pygame.time.delay(500)
+                                    self.logged_in = True
+                                    self.user = self.user_name_text
+                                elif result == "NO ACCOUNT FOUND":
+                                    self.saved_font = pygame.font.SysFont('Arial', 30, True, True)
+                                    self.saved_surface = self.saved_font.render("NO ACCOUNT FOUND", True, (150,255,150), GREY)
+                                    self.screen.blit(self.saved_surface, (660, 830))
+                                    pygame.display.update()
+                                    pygame.time.delay(500)
+                                
                         # Exit game
-                        if screens_obj.collide_exit:
+                        if screens.Screens.collide_exit:
+                            self.click_sound.play()
+                            pygame.time.delay(100) # delay exiting so that sound plays
+                            print("EXIT GAME")
                             pygame.quit()
                             sys.exit()
 
@@ -1617,6 +1755,7 @@ class Game:
                                             self.player_cards[i][11] = self.cant_select_event
                                             pygame.event.post(self.cant_select_event)
                                 i += 1
+                    
                     
                     # RIGHT CLICK
                     elif event.button == 3 and self.card_selected_rect is None:
@@ -1749,11 +1888,12 @@ class Game:
                     if event.key == pygame.K_ESCAPE:
                         running = False
                     # Enter debug mode
-                    if event.key == pygame.K_1:
+                    if event.key == pygame.K_1 and self.play_screen_active:
                         if self.debug_mode == False:
                             self.debug_mode = True
                         else:
                             self.debug_mode = False
+
             # LOADING SCREEN
             if self.loading:
                 self.loading_text = self.title_font.render('Loading', True, (255, 255, 255))
@@ -1762,10 +1902,10 @@ class Game:
             if self.generated_cards:
                 # WIN/LOSE
                 if len(self.player_cards) == 0:
-                    Game.loss_screen(self)
+                    screens.Screens.loss_screen(self)
                     self.lost = True
                 elif len(self.pc_cards) == 0:
-                    Game.win_screen(self)
+                    screens.Screens.win_screen(self)
                     self.won = True
             self.displaying = True # Set True, because we are about to display a new frame
             # UPDATE SCREEN
@@ -1775,5 +1915,6 @@ class Game:
 if running:
     Game().run()
 else:
+    print("NOT RUNNING EXIT")
     pygame.quit()
     sys.exit()

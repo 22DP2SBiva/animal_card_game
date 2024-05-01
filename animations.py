@@ -4,7 +4,7 @@ import display
 # pylint doest accept dynamically generated code, must use disable no member
 #pylint: disable=no-member
 SPEED = 2
-FAST_SPEED = 30
+FAST_SPEED = 40
 SELECT_POSITION_X = 900
 SELECT_POSITION_Y = 420
 class Animations:
@@ -33,7 +33,7 @@ class Animations:
     def move_to_starting_pos(self, card, no_cards_have_attacked_yet, new_position):
         i = 0
         start_rect = [card[5].x, card[5].y]
-        while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+        while i < FAST_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # Moves card back to the starting position
             # Checks if card current position X is the same as the starting position X
             new_rect = [card[5].x, card[5].y]
