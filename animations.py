@@ -1,9 +1,9 @@
-import pygame
 import math
 import display
 # pylint doest accept dynamically generated code, must use disable no member
 #pylint: disable=no-member
-SPEED = 2
+SPEED = 5
+MEDIUM_SPEED = 10
 FAST_SPEED = 40
 SELECT_POSITION_X = 900
 SELECT_POSITION_Y = 420
@@ -20,7 +20,6 @@ class Animations:
         while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             print("Frame" + str(i))
             # Moves the card slightly up in 5 int increments to simulate a hover effect
-            old_rect = [card[5].x, card[5].y] # create a new rect that points to the old card rect
             # Move card slightly up
             card[5].y += 1 # move card up slightly]
             new_rect = [card[5].x, card[5].y]
@@ -28,12 +27,11 @@ class Animations:
             # change positions of objects on screen
             # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
             i += 1
-        displayy = display.Display
-        displayy.modify_objects_to_display(self, start_rect, new_rect, False)
+        display.modify_objects_to_display(self, start_rect, new_rect, False)
     def move_to_starting_pos(self, card, no_cards_have_attacked_yet, new_position):
         i = 0
         start_rect = [card[5].x, card[5].y]
-        while i < FAST_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
+        while i < FAST_SPEED if self.combining else i < MEDIUM_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # Moves card back to the starting position
             # Checks if card current position X is the same as the starting position X
             new_rect = [card[5].x, card[5].y]
@@ -80,7 +78,7 @@ class Animations:
         # Find and replace old_pos in objects we want to display with the new position
         # change positions of objects on screen
         # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
-        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+        display.modify_objects_to_display(self, start_rect, new_rect, False)
     #                         obj_to_display
     def sort_card_positions(self, cards, player_cards, pc_cards):
         # PC
@@ -162,7 +160,7 @@ class Animations:
 
             
             i += 1
-        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+        display.modify_objects_to_display(self, start_rect, new_rect, False)
     def combine_cards(self, card1, card2):
         # Move two cards closer to each other until they meet
         i = 0
@@ -172,7 +170,7 @@ class Animations:
         new_rect2 = [card2[5][0], card2[5][1]]
 
         distance = math.sqrt((card1[5].x - card2[5].x)**2 + (card1[5].y - card2[5].y)**2) 
-        min_distance = 15
+        min_distance = 3
         print("COMBINE ANIM")
         while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # First position (x or y) is the place we want to move to, the second position (x or y) is where our card is located
@@ -213,8 +211,8 @@ class Animations:
 
             i += 1
         # Display both cards
-        display.Display.modify_objects_to_display(self, start_rect1, new_rect1, False)
-        display.Display.modify_objects_to_display(self, start_rect2, new_rect2, False)
+        display.modify_objects_to_display(self, start_rect1, new_rect1, False)
+        display.modify_objects_to_display(self, start_rect2, new_rect2, False)
 
     def card_battle(self, pc_card, player_card, attacking_card):
         if attacking_card == pc_card:
@@ -251,11 +249,11 @@ class Animations:
             if True in self.objects_to_display:
                 for card in self.objects_to_display:
                     if card[2] is True and start_rect == card[1]:
-                        display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                        display.modify_objects_to_display(self, start_rect, new_rect, True)
                     else:
-                        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+                        display.modify_objects_to_display(self, start_rect, new_rect, False)
             else:
-                display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                display.modify_objects_to_display(self, start_rect, new_rect, True)
         else:
             i = 0
             start_rect = [player_card[5].x, player_card[5].y]
@@ -288,11 +286,11 @@ class Animations:
             if True in self.objects_to_display:
                 for card in self.objects_to_display:
                     if card[2] is True and start_rect == card[1]:
-                        display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                        display.modify_objects_to_display(self, start_rect, new_rect, True)
                     else:
-                        display.Display.modify_objects_to_display(self, start_rect, new_rect, False)
+                        display.modify_objects_to_display(self, start_rect, new_rect, False)
             else:
-                display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+                display.modify_objects_to_display(self, start_rect, new_rect, True)
     def card_select(self, card):
         i = 0
         start_rect = [card[5].x, card[5].y]
@@ -315,6 +313,6 @@ class Animations:
 
             new_rect = [card[5].x, card[5].y]
             i += 1
-        display.Display.modify_objects_to_display(self, start_rect, new_rect, True)
+        display.modify_objects_to_display(self, start_rect, new_rect, True)
     def card_select_move(self, card):
         return 1   

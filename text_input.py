@@ -1,4 +1,3 @@
-import screens
 # pylint: disable=no-member
 # For managing user text input
 NAME_MAX_CHAR_LIMIT = 15

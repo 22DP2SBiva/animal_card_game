@@ -21,11 +21,12 @@ class File_Manager:
                 # File path for the CSV file
                 file = 'accounts.csv'
                 account = [name, password, "0"]
-                account = ','.join(account)
+                print(account)
                 # Open the file in append mode
-                with open(file, 'a') as file:
+                with open(file, 'a', newline='') as file:
                     # Append data to the CSV file
-                    file.write("\n"+account)
+                    writer = csv.writer(file)
+                    writer.writerow(account)
                 # Print a confirmation message
                 print(f"CSV file '{file}' appended to successfully.")
                 return "ACCOUNT ADDED"
@@ -34,6 +35,34 @@ class File_Manager:
                 return "ACCOUNT ALREADY EXISTS"
         else:
             return "EMPTY TEXT"
+    def add_account_with_score(self, name, password, score):
+        if name is not "" and password is not "":
+            file = 'accounts.csv'
+            with open(file, 'r') as file:
+                reader = csv.reader(file)
+                data = list(reader)
+                account = [name, password, str(score)]
+                file.seek(0) # Reset pointer position to start of file since data puts it at the end
+                # Find line where this account options data is stored
+                print("In read")
+                for line in reader:
+                    print(line)
+                    if line[0] == name and line[1] == password:
+                        # Replace account options data with new values
+                        print("data at index", data[data.index(line)])
+                        print("account", account)
+                        data[data.index(line)] = account
+                        found_account = True
+            file = 'accounts.csv'
+            if found_account:
+                print("found account")
+                with open(file, 'w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(data)
+            else:
+                print("Guest accoutn so no score added!")
+        else:
+            print("WTF")
     def login(self, name, password):
         # Check if account in CSV file
         found_account = File_Manager.find_account(self, name, password)
@@ -53,8 +82,6 @@ class File_Manager:
                 data = list(reader)
             # Replace default values (always at index 1) with new values
             data[1] = account
-            print(data)
-            print(data[1])
             # Rewrite data back to the CSV file
             file = 'options.csv'
             with open(file, 'w', newline='') as file:
@@ -102,14 +129,11 @@ class File_Manager:
                 data = list(reader)
                 return data
         else:
-            print("Registeresd read")
             file = 'options.csv'
             with open(file, 'r', newline='') as file:
                 reader = csv.reader(file)
                 for line in reader:
-                    print("line", line)
                     if line[0] == name and line[1] == password:
-                        print(line)
                         return line
     def get_account_data(self, name, password):
         file = 'accounts.csv'
