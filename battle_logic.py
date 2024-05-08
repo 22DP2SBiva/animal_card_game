@@ -1,9 +1,8 @@
 import animations
 import utilities
 # Determine battle outcome
-#                  attacking_card, defending_card
-def determine_outcome(self, card1, card2):
-    # Check which cards' tier is higher
+def determine_outcome(card1, card2):
+    # Check which cards tier is higher
     if card1[1] > card2[1]:
         winner = card1
     elif card1[1] == card2[1]:
@@ -30,7 +29,7 @@ def battle(self, card):
             self.battled_pc_card = cardd
             self.selected_card[12] = 1
             # Calculate winner of this battle
-            winner = determine_outcome(self, self.selected_card, cardd)    
+            winner = determine_outcome(self.selected_card, cardd)    
             # PC Wins
             if winner == cardd:
                 points = utilities.calculate_score(self.selected_card)
@@ -185,7 +184,7 @@ def battle(self, card):
             cardd[11] = None
             self.selected_card[11] = None
             # Calculate winner of this battle
-            winner = determine_outcome(self, cardd, self.selected_card)
+            winner = determine_outcome(cardd, self.selected_card)
             # Check which card has won, remove the other card
             if winner == cardd:
                 points = utilities.calculate_score(self.selected_card)

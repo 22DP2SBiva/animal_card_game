@@ -3,7 +3,6 @@ import pygame
 # Display objects to screen
 UNSELECTABLE = 180
 def display_objects(self):
-    # DISPLAYING OBJECTS
     # Display each object to screen
     i = 0
     display_last = False
@@ -13,20 +12,13 @@ def display_objects(self):
         if self.objects_to_display[i][2] is True:
             display_last = True
             # Search through all objects to find base card that mathes position of this top image card (but not the same object)
-            x = 0 # debug value
+            x = 0
             print(self.objects_to_display)
             for obj in self.objects_to_display:
                 # Checks if object position is the same as current list obj position and if image is NOT same for both objects
                 if obj[1] == self.objects_to_display[i][1] and obj[0] != self.objects_to_display[i][0]:
                     print(obj[1], self.objects_to_display[i][1], obj[0], self.objects_to_display[i][0])
                     base_of_last_object = obj # base card
-                # elif obj[1] == self.objects_to_display[i][1] and obj[0] == self.objects_to_display[i][0]:
-                #     break
-                #     # print("Same image")
-                # elif obj[1] != self.objects_to_display[i][1]:
-                #     break
-                #     # print("Not base card pos ", str(obj[1]))
-                # print("Image pos ", str(self.objects_to_display[i][1]))
                 x += 1
             last_object = self.objects_to_display[i] # card image
         else:
@@ -40,10 +32,6 @@ def display_objects(self):
         else:
             self.screen.blit(base_of_last_object[0], base_of_last_object[1]) # base card
             self.screen.blit(last_object[0], last_object[1]) # card image
-
-        #DEBUG
-        #self.screen.blit(base_of_last_object[0], [255,255]) # base card
-        #self.screen.blit(last_object[0], [355,355]) # card image
 # Modify specified object that you still want to be dislayed to the screen
 def modify_objects_to_display(self, old_value, new_value, top_most_layer):
     # Check all items in specified list

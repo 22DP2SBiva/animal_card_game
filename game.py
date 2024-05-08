@@ -1,4 +1,3 @@
-# pylint: disable=unsubscriptable-object
 import sys
 import pygame
 import collisions
@@ -12,6 +11,7 @@ import text_input
 import game_logic
 import round_manager
 # dependencies: pygame
+# pylint: disable=unsubscriptable-object
 
 # Constants
 WIDTH, HEIGHT = 1920, 1080
@@ -408,11 +408,9 @@ class Game:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.battle_event:
                             battle_logic.battle(self, cardd)
-                print("Colliding?", self.colliding)
                 self.press = False
                 # Mouse button down (could be any)
                 if event.type == pygame.MOUSEBUTTONDOWN: 
-                    print("\033[31mPRESSED\033[0m")
                     # LEFT CLICK
                     self.press = True
                     if event.button == 1 and self.selected_card_count != 1:
@@ -423,9 +421,7 @@ class Game:
                     
                     # RIGHT CLICK
                     elif event.button == 3 and self.card_selected_rect is None:
-                        print("Right click")
                         if self.colliding:
-                            print("Past colliuding")
                             if self.pressing is False:
                                 self.press_count += 1
                                 self.pressing = True
@@ -433,8 +429,6 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.pressing = False
                     self.press_count = 0
-                print("Press count", self.press_count)
-                print(pygame.mouse.get_pressed()[0])
                 # KEYDOWN events
                 if event.type == pygame.KEYDOWN:
                     # Quit game with escape key

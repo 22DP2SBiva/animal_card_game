@@ -1,6 +1,19 @@
-# **Animal card  game**
+# **Dzīvnieku kāršu spēle**
 
-###### - dzīvnieku kāršu spēle -
+## Ieinstalēšana/Spēles palaišana
+
+---
+
+1) No saites https://code.visualstudio.com/ instalējiet Visual Studio Code (tieši Windows versiju).
+    a) Iekš Visual Studio Code apakšcilnes Extensions instalējiet Python extension.
+2) Python mājaslapā https://www.python.org/downloads/ instalējiet Python jaunāko versiju.
+3) Lai Pygame instalētu, atveriet saiti https://www.pygame.org/news un kopējiet jaunākā ieraksta kodu (piemēram, ```python -m pip install -U pygame==2.5.2 --user```), atveriet Windows PowerShell un iekopējiet kodu iekš PowerShell, spiediet Enter pogu. Tagad Pygame automātiski instalēsies jūsu datorā.
+4) Atveriet linku https://github.com/22DP2SBiva/animal_card_game un spiediet uz pogas Code -> Download ZIP. Izpakojiet .zip failu un saglabājiet šo folderi viegli pieejamā vietā uz datora.
+5) Lai sāktu spēli, iekš Visual Studio Code uzspiediet uz apakšcilnes File -> Open Folder un izvēlaties iepriekš saglabāto folderi ar spēli. Atveriet game.py un spiediet uz trijstūrveidīgas pogas Run Python File.
+
+
+
+## Kā spēlē
 
 ---
 
@@ -29,7 +42,7 @@ Katrs kārts var **tikai vienu reizi** cīnīt citu kārti.
 
 ##### Kāršu pārvēršanās
 
-Gājiena beigās, katru gājienu, spēlētājam kārtis pārvēršas uz lielāka līmeņa kārti, ja ir iespējams.
+Abu spēlētāju gājiena beigās, katru gājienu, spēlētājam kārtis pārvēršas uz lielāka līmeņa kārti, ja ir iespējams.
 
 - Sienāzis pārvēršas par Vardi;
 - Varde pārvēršas par Čūsku;
@@ -38,31 +51,27 @@ Gājiena beigās, katru gājienu, spēlētājam kārtis pārvēršas uz lielāka
 
 ##### Gājiens
 
-Paša 1. gājiena sākumā katram spēlētājam automātiski un nejauši tiek izvilktas 3 kārtis.
+Paša 1. gājiena sākumā katram spēlētājam automātiski un nejauši tiek izvilktas 6 kārtis.
 Katru nākošo gājienu katram izvilk 1 kārti, joprojām nejauši izvēlētu.
 
 Katru gājienu jums ir arī izvēle Cīnīt un/vai Beigt gājienu.
 
-Katra gājiena sākumā (neskaitot 1. gājienu) jums ir jāupurē viena kārts un tad automātiski tiek izvilkta jauna.
-
-Pretiniekam nav jāupurē kārts, toties pretiniekam katru gājienu kārtis nepārvērtas par vienu līmeni lielākām.
-
 ##### Cīnīt
 
-Ja izvēlaties cīnīt, tad tev ir jāizvēlas viena no savām kārtīm un viena no pretinieka, kuru cīnīs.
+Ja izvēlaties cīnīt, tad tev ir jāizvēlas viena no savām kārtīm un viena no pretinieka, kuru cīnīs. (Ar kreiso peles pogu)
 Pēc tam, algoritms automātiski izlems, pēc barības ķēdes, kurš šinī cīņā uzvarēja un to izvadīs.
 
 ##### Beigt gājienu
 
 Ja izvēlaties beigt gājienu, tad algoritms aprēķina, vai jūs esat jau uzvarējuši vai zaudējuši, ja nē, tad sāk jaunu gājienu.
 
-Pretējā gadījumā, jums iedod iespēju vai nu sākt spēli no jauna, vai nu beigt spēlēt, kas aiztaisīs termināli.
+Pretējā gadījumā, jums iedod iespēju vai nu sākt spēli no jauna, vai nu beigt spēlēt.
 
 ##### Zaudēšana
 
-Ja jums ir neviena kārts palikusi un pretiniekam ir vismaz viena kārts, tad jūs zaudējat.
+Ja jums neviena kārts nav palikusi un pretiniekam ir vismaz viena kārts, tad jūs zaudējat.
 Bet, ja abiem nav neviena kārts, tad abi zaudē.
 
 ##### Uzvarēšana
 
-Ja jums ir vismaz viens kārts un jūs esat nosituši visas pretinieka kārtis, tad uzvarat.
+Ja jums ir vismaz viena kārts un jūs esat nosituši visas pretinieka kārtis, tad jūs uzvarat.

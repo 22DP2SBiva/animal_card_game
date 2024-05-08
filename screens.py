@@ -504,11 +504,8 @@ def screen_management(self):
 def handle_selection(self):
     global collide_save_options, collide_account
     if self.start_screen_active: 
-        # START SCREEEN
-        # print("START")
         # Start button collision
         if collide_start:
-            print("Colliding with START")
             self.click_sound.play()
             self.loading = True
             # Switch to play screen

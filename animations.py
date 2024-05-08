@@ -8,24 +8,15 @@ FAST_SPEED = 40
 SELECT_POSITION_X = 900
 SELECT_POSITION_Y = 420
 class Animations:
-    """Animates card being hovered over (moves slightly up and stops).
-
-        Parameters:
-            image(string): A string(card image directory)
-            rect(rect): A rect that's linked to the card
-    """
     def card_hover(self, card):
         i = 0
         start_rect = [card[5].x, card[5].y]
         while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             print("Frame" + str(i))
             # Moves the card slightly up in 5 int increments to simulate a hover effect
-            # Move card slightly up
             card[5].y += 1 # move card up slightly]
             new_rect = [card[5].x, card[5].y]
-            # Find and replace old_pos in objects we want to display with the new position
             # change positions of objects on screen
-            # PS: refrencing self at the start makes it unnecessary to refrence self as a parameter, even if tehnically required (will throw error if you decide to still write it as a parameter too)
             i += 1
         display.modify_objects_to_display(self, start_rect, new_rect, False)
     def move_to_starting_pos(self, card, no_cards_have_attacked_yet, new_position):
@@ -171,7 +162,6 @@ class Animations:
 
         distance = math.sqrt((card1[5].x - card2[5].x)**2 + (card1[5].y - card2[5].y)**2) 
         min_distance = 3
-        print("COMBINE ANIM")
         while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # First position (x or y) is the place we want to move to, the second position (x or y) is where our card is located
             # Aditionally, in new_positions first [0] is the current loop index, second [0] is the position tuple and [1] is the y value of the position
@@ -314,5 +304,3 @@ class Animations:
             new_rect = [card[5].x, card[5].y]
             i += 1
         display.modify_objects_to_display(self, start_rect, new_rect, True)
-    def card_select_move(self, card):
-        return 1   
