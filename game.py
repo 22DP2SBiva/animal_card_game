@@ -223,7 +223,6 @@ class Game:
             for event in pygame.event.get():
                 # Close window
                 if event.type == pygame.QUIT:
-                    print("EXIT GAME QUIT")
                     pygame.quit()
                     sys.exit()
                 # For text input
@@ -246,7 +245,6 @@ class Game:
                                 cardd[12] += 1
                 # if card hovering called and still should be animating this card
                 if event.type == self.move_to_starting_pos_e:
-                    print("Moving back")
                     i = 0
                     for cardd in self.player_cards:
                         
@@ -263,13 +261,10 @@ class Game:
                                 elif self.combined_cards:
                                     # If card just combined, move this card above other cards till gets to new position
                                     if cardd[16] is True:
-                                        # print("\033[31mOLD position\033[0m", [cardd[5].x, cardd[5].y])
-                                        # print("\033[31mnew position\033[0m", [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50])
                                         animations.Animations.move_to_starting_pos(self, cardd, False, [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50])
                                         if [cardd[5].x, cardd[5].y]  == [self.new_positions[0][i][0], self.new_positions[0][i][1] - 50]: # If card at the new postiiton
                                             cardd[16] = False
                                     else:
-                                        # print("NOT just combined")
                                         animations.Animations.move_to_starting_pos(self, cardd, False, self.new_positions[0][i])
                                     cardd[12] += 1
                                 else:
@@ -279,7 +274,6 @@ class Game:
                         i += 1
                 # Select a card
                 if event.type == self.select_e and self.card_selected is True:
-                    # print("Selecting card")
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.select_event:
@@ -307,7 +301,6 @@ class Game:
                             if self.card_selected is False and self.card_to_collide is cardd:
                                 cardd[14] = 1
                 if event.type == self.make_selectable_e:
-                    # print("Make selectable")
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.make_selectable_event:
@@ -316,14 +309,12 @@ class Game:
                                 # Disable event
                                 cardd[11] = None
                 if event.type == self.move_to_new_pos_e:
-                    # print("Move to NEW POS")
                     self.new_positions = animations.Animations.sort_card_positions(self, self.objects_to_display, self.player_cards, self.pc_cards)
                     i = 0
                     player_cards_reached_pos_count = 0
                     for cardd in self.player_cards: 
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
-                            print("Player card moving to NEW POS")
                             # new positions:
                             if cardd[5].x == self.new_positions[0][i][0] and cardd[5].y == self.new_positions[0][i][1]:
                                 # Disable event
@@ -332,7 +323,6 @@ class Game:
                             else:
                                 self.sorting_cards = True
                                 self.done_base_sort = True
-                                print("player moving")
                                 cardd[12] = 1
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[0][i])
                             i += 1
@@ -341,7 +331,6 @@ class Game:
                     for cardd in self.pc_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.move_to_new_pos_event:
-                            print("PC card moving to NEW POS")
                             if cardd[5].x == self.new_positions[1][i][0] and cardd[5].y == self.new_positions[1][i][1]:
                                 # Disable event
                                 cardd[12] = 0
@@ -349,7 +338,6 @@ class Game:
                             else:
                                 self.sorting_cards = True
                                 self.done_base_sort = True
-                                print("pc moving")
                                 cardd[12] = 1
                                 animations.Animations.move_card_to_new_pos(self, cardd, self.new_positions[1][i])
                             i += 1
@@ -362,8 +350,6 @@ class Game:
                         round_manager.reset_events(self)
                         # All cards have battled this turn, so end turn
                         if self.turn is "PLAYER":
-                            print("battled card count:", self.player_battled_all_cards_count)
-                            print("player card count", len(self.player_cards))
                             if self.player_battled_all_cards_count == len(self.player_cards):
                                 round_manager.end_turn(self)
                             else:
@@ -371,7 +357,6 @@ class Game:
                                 round_manager.soft_reset_card_values(self)
                                 player_cards_reached_pos_count = 0
                                 pc_cards_reached_pos_count = 0
-                                print("restet player")
 
                         # All cards have battled this turn, so end turn
                         elif self.turn is "PC":
@@ -380,17 +365,14 @@ class Game:
                             else:
                                 # Hasn't battled all cards yet, so we continue turn and reset values
                                 round_manager.soft_reset_card_values(self)
-                                print("restet pc")
                                 player_cards_reached_pos_count = 0
                                 pc_cards_reached_pos_count = 0
                 if event.type == self.combine_e:
-                    print("Combine")
                     i = 0
                     player_cards_reached_pos_count = 0
                     for cardd in self.player_cards:
                         # Is this event the same event the card should be doing?
                         if cardd[11] == self.combine_event:
-                            print("Combining")
                             min_distance = 3 # minimum distance till "hit" target position
                             # Calculate distance between first and second card
                             distance_to_target = utilities.distance(self.first_card_to_combine[5].x, self.first_card_to_combine[5].y, self.second_card_to_combine[5].x, self.second_card_to_combine[5].y)
@@ -480,6 +462,5 @@ class Game:
 if running:
     Game().run()
 else:
-    print("NOT RUNNING EXIT")
     pygame.quit()
     sys.exit()

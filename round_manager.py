@@ -13,7 +13,6 @@ def end_turn(self):
         self.next_turn = "PLAYER"
         end_round(self)
     elif self.turn == "PLAYER":
-        print("PLAYERR")
         self.next_turn = "PC"
         self.sorting_cards = False 
         self.done_base_sort = False
@@ -23,7 +22,6 @@ def end_turn(self):
         new_turn(self)
 
 def reset_card_values(self):
-    print("Resetting values")
     # Reset variables
     self.battling = False
     self.sorting_cards = False
@@ -47,7 +45,6 @@ def reset_card_values(self):
         cardd[15] = False
 def soft_reset_card_values(self):
     # Mainly for use in a singular turn since we dont want to reset info about what cards have atacked this turn
-    print("Resetting values")
     # Reset variables
     self.battling = False
     self.sorting_cards = False

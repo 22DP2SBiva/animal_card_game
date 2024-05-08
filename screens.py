@@ -294,7 +294,6 @@ def options_screen(self, logged_in, user):
     
 
     # Text boxes
-    print("SCREENS: MAX CARD TYPE?", self.typing_max_card_count)
     if self.typing_max_card_count:
         self.py.draw.rect(self.screen, GREY, self.input_rect_max_card, 4)
     elif self.typing_new_card_count:
@@ -343,7 +342,6 @@ def account_login_screen(self, logged_in, user):
     
     # Text input
     self.input_font = self.py.font.SysFont('Arial', 50)
-    print("Inputted text:", self.user_name_text)
     self.name_text_surface = self.input_font.render(self.user_name_text, True, (0,0,0))
     self.screen.blit(self.name_text_surface, (755, 540))
     self.password_text_surface = self.input_font.render(self.user_password_text, True, (0,0,0))
@@ -381,7 +379,6 @@ def account_signin_screen(self, logged_in, user):
 
     # Text input
     self.input_font = self.py.font.SysFont('Arial', 50)
-    print("Inputted text:", self.user_name_text)
     self.name_text_surface = self.input_font.render(self.user_name_text, True, (0,0,0))
     self.screen.blit(self.name_text_surface, (755, 540))
     self.password_text_surface = self.input_font.render(self.user_password_text, True, (0,0,0))
@@ -465,7 +462,6 @@ def screen_management(self):
         account_signin_screen(self, self.logged_in, self.user)
     # PLAY
     if self.play_screen_active:
-        print("Play")
         if self.py.mixer.music.get_busy() is False or self.music_playing is not "play1":
             self.py.mixer.music.load('Sounds/play1.mp3')
             self.py.mixer.music.play(-1)
@@ -495,11 +491,6 @@ def screen_management(self):
             card.generate_cards(self, 1) # Generate deck of card for both player and pc
             self.loading = False
             self.added_new_cards = True
-        # elif self.round_count > 1 and self.added_new_cards == True and self.sorting_cards == False and self.turn is not "PC":
-        #     if self.sorted_at_turn_start is False:
-        #         print("Sorting as turn start")
-        #         self.sorted_at_turn_start = True
-        #         self.sort_cards(self) # sort cards before turn start for safety (in case a new card is added)
     
 def handle_selection(self):
     global collide_save_options, collide_account
@@ -519,7 +510,6 @@ def handle_selection(self):
             self.sort_by_high = False
         # Open options menu
         if collide_options:
-            print("OPTIONS")
             self.click_sound.play()
             self.account_choice_open = False
             self.options_open = True
@@ -533,9 +523,7 @@ def handle_selection(self):
                 self.start_screen_active = True
 
                 back(self)
-                print("BACK")
             if collide_save_options:
-                print("CHANGE OPTIONS")
                 self.new_round_sound.play()
                 file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.bg_choice, self.music_volume_text, self.sfx_volume_text)
                 collide_save_options = False
@@ -594,7 +582,6 @@ def handle_selection(self):
                 self.bg_choice = 'jungle'
         # Open account menu
         if collide_account:
-            print("ACCOUNT")
             self.click_sound.play()
             self.options_open = False
             self.account_choice_open = True
@@ -606,7 +593,6 @@ def handle_selection(self):
             self.account_choice_open = False
             self.start_screen_active = True
             back(self)
-            print("BACK")
             
         # Sign in
         if collide_signin:
@@ -639,10 +625,8 @@ def handle_selection(self):
                 self.start_screen_active = True
                 self.account_signin_open = False
                 back(self)
-                print("BACK")
             # Pressing save button
             if collide_save_account:
-                print("SAVE")
                 self.new_round_sound.play()
                 result = file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
                 if result == "ACCOUNT ADDED":
@@ -667,7 +651,6 @@ def handle_selection(self):
                     self.py.time.delay(500)
         # Log in
         if collide_login:
-            print("LOGIN 1st")
             self.click_sound.play()
             self.account_choice_open = False
             collide_account = False
@@ -681,7 +664,6 @@ def handle_selection(self):
                 self.start_screen_active = True
                 self.account_login_open = False
                 back(self)
-                print("BACK T")
             # Pressing name input text box
             elif collide_name_input:
                 self.toggle_sound.play()
@@ -694,7 +676,6 @@ def handle_selection(self):
                 self.typing_name = False
             # Pressing login button
             elif collide_save_login:
-                print("FILE LOGIN")
                 self.new_round_sound.play()
                 result = file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
                 if result == "LOGGED IN":
@@ -716,21 +697,17 @@ def handle_selection(self):
         if collide_exit:
             self.click_sound.play()
             self.py.time.delay(100) # delay exiting so that sound plays
-            print("EXIT self")
             self.py.quit()
             sys.exit()
 
     # Cards have already been generated and collisiosn have been checked earlier
     if self.generated_cards and self.collisions_checked:
-        print("One")
         # Cursor colliding with end turn button and clicking (Player wants to end their turn)
         if self.collide_end_turn_button:
-            print("Colliding with end turn button")
             round_manager.end_turn(self)
         game_logic.handle_card_selection(self)
 def reset_game(self):
     global collide_back, collide_login, collide_signin
-    print("Resetting")
     # Only add score to leaderboard if won the self
     if self.won:
         file_manager.File_Manager.add_account_with_score(self, self.user, self.user_password_text, self.current_score)

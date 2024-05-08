@@ -13,11 +13,9 @@ def display_objects(self):
             display_last = True
             # Search through all objects to find base card that mathes position of this top image card (but not the same object)
             x = 0
-            print(self.objects_to_display)
             for obj in self.objects_to_display:
                 # Checks if object position is the same as current list obj position and if image is NOT same for both objects
                 if obj[1] == self.objects_to_display[i][1] and obj[0] != self.objects_to_display[i][0]:
-                    print(obj[1], self.objects_to_display[i][1], obj[0], self.objects_to_display[i][0])
                     base_of_last_object = obj # base card
                 x += 1
             last_object = self.objects_to_display[i] # card image
@@ -100,7 +98,6 @@ def display_unselectable_cards(self):
         if self.drawing_unselectable is False:
             for cardd in self.player_cards:
                 if cardd[14] is not 0:
-                    print("unselectable")
                     if self.press:
                         self.cant_select_sound.play()
                     self.drawing_unselectable = True
@@ -108,16 +105,12 @@ def display_unselectable_cards(self):
                     unselectable_image.set_alpha(UNSELECTABLE) # alpha level
                     unselectable_image.fill((255,255,255)) # this fills the entire surface
                     self.screen.blit(unselectable_image, [cardd[5].x, cardd[5].y]) # (0,0) are the top-left coordinates
-                    # print("DRAWING PLAYER"+ str(cardd))
                     cardd[14] = 0
             for cardd in self.pc_cards:
                 if cardd[14] is not 0:
-                    print("unselectable pc")
                     if self.press:
-                        print("playin cant seleect")
                         self.cant_select_sound.play()
                     self.drawing_unselectable = True
-                    # print("DRAWING PC" + str(cardd))
                     unselectable_image = pygame.Surface(cardd[5].size) # the size of rect
                     unselectable_image.set_alpha(UNSELECTABLE) # alpha level
                     unselectable_image.fill((255,255,255)) # this fills the entire surface

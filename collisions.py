@@ -85,7 +85,6 @@ def check_collisions(self):
                             # If current position of card is not the same as the new position of the card, then move back to new position
                             if self.player_cards[i][5].x != self.new_positions[0][i][0] or self.player_cards[i][5].y != self.new_positions[0][i][1]:
                                 if self.player_cards[i][13] is False:
-                                    print("NEW POS MOVE BACK")
                                     if self.move_back_disabled is False: # Check that moving back is not disabled 
                                         self.py.event.post(self.move_to_starting_pos_event)
                                         new_event = self.move_to_starting_pos_event
@@ -103,7 +102,6 @@ def check_collisions(self):
                 if self.pc_colliding_with_card[i] and self.pc_cards[i][9] == False:
                     self.card_to_collide = self.pc_cards[i]
                     if self.card_selected is True and self.pressing is True:
-                        print("Activating battle event")
                         # Card can be selected, so start battle sequence
                         self.battling = True
                         self.py.event.post(self.battle_event)
@@ -117,7 +115,6 @@ def check_collisions(self):
                         self.no_cards_attacked_yet = False
                         self.player_cards[self.player_cards.index(self.selected_card)][15] = True # Is attacking, so True and set it to player cards too
                     elif self.card_selected is False:
-                        print("CANT SELECT PC")
                         # Card can't be interacted with, so turn grey
                         self.py.event.post(self.cant_select_event)
                         new_event = self.cant_select_event

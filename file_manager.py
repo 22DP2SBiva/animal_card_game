@@ -21,21 +21,19 @@ class File_Manager:
                 # File path for the CSV file
                 file = 'accounts.csv'
                 account = [name, password, "0"]
-                print(account)
                 # Open the file in append mode
                 with open(file, 'a', newline='') as file:
                     # Append data to the CSV file
                     writer = csv.writer(file)
                     writer.writerow(account)
                 # Print a confirmation message
-                print(f"CSV file '{file}' appended to successfully.")
                 return "ACCOUNT ADDED"
             else:
-                print("Account already exists.")
                 return "ACCOUNT ALREADY EXISTS"
         else:
             return "EMPTY TEXT"
     def add_account_with_score(self, name, password, score):
+        found_account = False
         if name is not "" and password is not "":
             file = 'accounts.csv'
             with open(file, 'r') as file:
@@ -44,37 +42,26 @@ class File_Manager:
                 account = [name, password, str(score)]
                 file.seek(0) # Reset pointer position to start of file since data puts it at the end
                 # Find line where this account options data is stored
-                print("In read")
                 for line in reader:
-                    print(line)
                     if line[0] == name and line[1] == password:
                         # Replace account options data with new values
-                        print("data at index", data[data.index(line)])
-                        print("account", account)
                         data[data.index(line)] = account
                         found_account = True
             file = 'accounts.csv'
             if found_account:
-                print("found account")
-                with open(file, 'w', newline='') as file:
+                with open(file, 'w', newline='\n') as file:
                     writer = csv.writer(file)
                     writer.writerows(data)
-            else:
-                print("Guest accoutn so no score added!")
-        else:
-            print("WTF")
     def login(self, name, password):
         # Check if account in CSV file
         found_account = File_Manager.find_account(self, name, password)
         if found_account:
-            print("Successfully logged in.")
             return "LOGGED IN"
         else:
             return "NO ACCOUNT FOUND"
     def change_options(self, name, password, max_card_count, new_card_count, background, music_volume, sfx_volume):
         # Guest user
         if name is "" and password is "":
-            print("Guest")
             file = 'options.csv'
             account = [name, password, max_card_count, new_card_count, background, music_volume, sfx_volume]
             with open(file, 'r', newline='') as file:
@@ -87,10 +74,8 @@ class File_Manager:
             with open(file, 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(data)
-            print(f"CSV file '{file}' written to successfully.")
         # Registered user
         else:
-            print("Registered user")
             found_account = False
             file = 'options.csv'
             with open(file, 'r') as file:
@@ -99,27 +84,20 @@ class File_Manager:
                 account = [name, password, max_card_count, new_card_count, background, music_volume, sfx_volume]
                 file.seek(0) # Reset pointer position to start of file since data puts it at the end
                 # Find line where this account options data is stored
-                print("In read")
                 for line in reader:
-                    print(line)
                     if line[0] == name and line[1] == password:
                         # Replace account options data with new values
-                        print("data at index", data[data.index(line)])
-                        print("account", account)
                         data[data.index(line)] = account
                         found_account = True
             file = 'options.csv'
             if found_account:
-                print("found account")
                 with open(file, 'w', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerows(data)
             else:
-                print("no account in options file")
                 account = ','.join(account)
                 with open(file, 'a', newline='') as file:
                     file.write(account)
-            print(f"CSV file '{file}' written to successfully.")
     def get_options(self, name, password):
         # Return options list
         if name is "" and password is "":

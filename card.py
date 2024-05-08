@@ -11,7 +11,7 @@ cards = [
             ["Eagle", 4, "Assets/eagle.png", "None"]
         ]
 def generate_card():
-    #Generates card image directory string to use from array (with card generation probabilities).
+    # Generates card image directory string to use from array (with card generation probabilities).
     # Define the cards chances
     card_chances = [
         (cards[0], 0.4),  # Grasshopper - 40%
@@ -39,7 +39,6 @@ def generate_cards(self, count_to_generate):
     pc_pos = [350, 80] # Default pos
     # Checks if current turn is not the first, if so then take last card positions from outside and redefine
     if self.turn_count > 1:
-        print(self.player_cards)
         player_last_card_pos[0] = self.player_cards[len(self.player_cards)-1][5].x
         player_last_card_pos[1] = self.player_cards[len(self.player_cards)-1][5].y
         pc_last_card_pos[0] = self.pc_cards[len(self.pc_cards)-1][5].x
@@ -51,8 +50,6 @@ def generate_cards(self, count_to_generate):
         x = 100
     
     while(i < count_to_generate):
-        
-        print("i: ", i)
         # Generate card (Name, Tier, Image directory, Ability)
         
         # Create temporary lists that store the values, then add them to the main card deck lists and re-use these temp lists each loop
@@ -110,7 +107,6 @@ def generate_cards(self, count_to_generate):
             self.objects_to_display.append([self.player_sub_list[4], self.player_sub_list[8], False])
             self.objects_to_display.append([self.player_sub_list[3], self.player_sub_list[8], False])
         if len(self.pc_cards) < self.max_card_amount:
-            print(len(self.pc_cards))
             # PC CARDS
             
             # load card image
@@ -188,7 +184,6 @@ def tier_up_cards(self):
     for cardd in self.player_cards:
         if cardd[1] != 4:
             new_card = generate_higher_tier_card(cardd[1])
-            print("player cards", str(self.player_cards[i]))
             old_player_card.append([self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False])
             self.player_cards[i][0] = new_card[0]
             self.player_cards[i][1] = new_card[1]
@@ -198,7 +193,6 @@ def tier_up_cards(self):
             
             self.player_cards[i][3].convert_alpha()
             self.player_cards[i][3] = self.py.transform.scale(self.player_cards[i][3], (1000,900))
-            print("NEW player cards", str(self.player_cards[i]))
             new_player_card.append([self.player_cards[i][3], [self.player_cards[i][5].x, self.player_cards[i][5].y], False])
             
         i += 1
@@ -228,7 +222,5 @@ def tier_up_cards(self):
         if cardd in self.objects_to_display:
             index = self.objects_to_display.index(cardd)
             self.objects_to_display[index] = new_pc_card[i]
-        i += 1    
-            
-    print("last i", i)
+        i += 1
     

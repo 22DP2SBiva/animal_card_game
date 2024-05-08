@@ -12,7 +12,6 @@ def determine_outcome(card1, card2):
     return winner
 def battle(self, card):
     cardd = card
-    print("Battling")
     selected_card_pos = [self.selected_card[5].x, self.selected_card[5].y]
     cardd_pos = [cardd[5].x, cardd[5].y]
     min_distance = 40 # minimum distance till "hit" target position
@@ -21,7 +20,6 @@ def battle(self, card):
         # Calculate distance between pc card and player card
         distance_to_target = utilities.distance(cardd[5].x, cardd[5].y, self.selected_card[5].x, self.selected_card[5].y)
         if distance_to_target <= min_distance:
-            print("Delay in battling")
             self.py.time.delay(1000) 
             
             # Disable event
@@ -33,7 +31,6 @@ def battle(self, card):
             # PC Wins
             if winner == cardd:
                 points = utilities.calculate_score(self.selected_card)
-                print("Remove 1")
                 if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                     self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
                     self.player_cards.remove(self.selected_card)
@@ -51,7 +48,6 @@ def battle(self, card):
                 
             elif winner is None:
                 
-                print("Remove both 2") 
                 if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                     if len(self.pc_attacked) > 0:
                         # Remove also card from pc attacked list
@@ -123,9 +119,6 @@ def battle(self, card):
                 self.objects_to_display.remove(basecard)
             # Player wins
             else:
-                print(self.pc_attacked)
-                print(cardd)
-                print("Remove 3") 
                 if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                     if len(self.pc_attacked) > 0:
                         # Remove also card from pc attacked list
@@ -165,7 +158,6 @@ def battle(self, card):
             self.py.time.delay(500)
             self.card_destroy_sound.play()
             # Sort cards
-            print("Sorts cards")
             
             utilities.sort_cards(self)
         else:
@@ -175,7 +167,6 @@ def battle(self, card):
         
     # Check if it's the PLAYERS' turn, in whick case the PLAYER would be attacking (third parameter is which card is attacking)
     elif self.turn == "PLAYER":
-        print("Player battling")
         distance_to_target = utilities.distance(self.selected_card[5].x, self.selected_card[5].y, cardd[5].x, cardd[5].y)
         if distance_to_target <= min_distance:
             # Disable event
@@ -189,7 +180,6 @@ def battle(self, card):
             if winner == cardd:
                 points = utilities.calculate_score(self.selected_card)
                 # Pc Wins
-                print("Remove 1") 
                 
                 if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                     self.objects_to_display.remove([self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True])
@@ -208,7 +198,6 @@ def battle(self, card):
                 
             elif winner is None:
                 
-                print("Remove both 2") 
                 if [self.selected_card[3], [self.selected_card[5].x, self.selected_card[5].y], True] in self.objects_to_display:
                     if len(self.pc_attacked) > 0:
                     # Remove also card from pc attacked list
@@ -282,8 +271,6 @@ def battle(self, card):
                 self.objects_to_display.remove(basecard)
             else:
                 # Player wins
-                print("Remove 3") 
-                print(self.pc_attacked)
                 if [cardd[3], [cardd[5].x, cardd[5].y], False] in self.objects_to_display:
                     if len(self.pc_attacked) > 0:
                         # Remove also card from pc attacked list
@@ -323,7 +310,6 @@ def battle(self, card):
             self.py.time.delay(500)
             self.card_destroy_sound.play()
             # Sort cards
-            print("Sorts cards")
             
             utilities.sort_cards(self)
         else:

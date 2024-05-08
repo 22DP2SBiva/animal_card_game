@@ -11,9 +11,7 @@ def sort_by_highest(accounts):
             inserted = False
             for i, sorted_user in enumerate(sorted_accounts):
                 if int(user[2]) > int(sorted_user[0]):
-                    print("user ", user[2], "is larger than ", sorted_user[0])
                     sorted_accounts.insert(i, [user[2], user[0]])
-                    print("inserting into ", i)
                     inserted = True
                     break
             if not inserted:
@@ -75,7 +73,6 @@ def set_options_values(self, options):
         self.sfx_volume_text = options[1][6]
     # Registered user
     elif self.user_name_text != "" and self.user_password_text != "" and self.options_changed is True:
-        print(options)
         self.max_card_count_text = options[2]
         self.new_card_count_text = options[3]
         self.bg_choice = options[4]

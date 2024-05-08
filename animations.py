@@ -12,7 +12,6 @@ class Animations:
         i = 0
         start_rect = [card[5].x, card[5].y]
         while i < SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
-            print("Frame" + str(i))
             # Moves the card slightly up in 5 int increments to simulate a hover effect
             card[5].y += 1 # move card up slightly]
             new_rect = [card[5].x, card[5].y]
@@ -127,7 +126,6 @@ class Animations:
         i = 0
         start_rect = [card[5][0], card[5][1]]
         new_rect = [card[5][0], card[5][1]]
-        print("MOVING CARD TO NEW POS ANIMATION")
         while i < FAST_SPEED: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
             # First position (x or y) is the place we want to move to, the second position (x or y) is where our card is located
             # Aditionally, in new_positions first [0] is the current loop index, second [0] is the position tuple and [1] is the y value of the position
@@ -210,7 +208,6 @@ class Animations:
             start_rect = [pc_card[5].x, pc_card[5].y]
             new_rect = [pc_card[5].x, pc_card[5].y]
             distance = math.sqrt((player_card[5].x - pc_card[5].x)**2 + (player_card[5].y - pc_card[5].y)**2) 
-            #print(distance)
             min_distance = 5
             while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
                 # Moves the card slightly up in 5 int increments to simulate a hover effect
@@ -249,7 +246,6 @@ class Animations:
             start_rect = [player_card[5].x, player_card[5].y]
             new_rect = [player_card[5].x, player_card[5].y]
             distance = math.sqrt((pc_card[5].x - player_card[5].x)**2 + (pc_card[5].y - player_card[5].y)**2) 
-            #print(distance)
             min_distance = 0.5
             while i < FAST_SPEED and distance >= min_distance: # Each loop runs thorugh SPEED times (more speed, the faster the object does the movement)
                 # Moves the card slightly up in 5 int increments to simulate a hover effect
