@@ -194,8 +194,11 @@ class Game:
     def run(self):
         global running
         while running:
-            # ! Make this check EVERY card, not just one and use that for every other list card
             self.pos = pygame.mouse.get_pos() # Cursor position
+            # If the game lost/won/draw and pressing back button, then reset game
+            if screens.collide_back_end and self.press:
+                self.switch_sound.play()
+                screens.reset_game(self)
             # If currently not re-inputting account data, then change current options settings to this accounts settings
             if self.options_open is False:
                 if self.typing_name is False and self.typing_password is False:
@@ -422,8 +425,6 @@ class Game:
                             self.debug_mode = True
                         else:
                             self.debug_mode = False
-            if screens.collide_back_end and self.press:
-                screens.reset_game(self)
             # LOADING SCREEN
             if self.loading:
                 self.loading_text = self.title_font.render('Loading', True, (255, 255, 255))

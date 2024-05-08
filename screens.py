@@ -82,6 +82,20 @@ def generate_images(self):
     
     self.account_signin_panel = self.py.image.load("Assets/signup_panel.png").convert_alpha()
     self.account_signin_panel = self.py.transform.scale(self.account_signin_panel, (1700,1100))
+
+    self.win_bg = self.py.image.load("Assets/win.png").convert_alpha()
+    self.lose_bg = self.py.image.load("Assets/lose.png").convert_alpha()
+
+    self.help = self.py.image.load("Assets/instructions.png").convert_alpha()
+    self.help = self.py.transform.scale(self.help, (800,500))
+
+    self.plains_button = self.py.image.load("Assets/plains_button.png").convert_alpha()
+    self.plains_button = self.py.transform.scale(self.plains_button, (2400,1700))
+    self.desert_button = self.py.image.load("Assets/desert_button.png").convert_alpha()
+    self.desert_button = self.py.transform.scale(self.desert_button, (2400,1700))
+    self.jungle_button = self.py.image.load("Assets/jungle_button.png").convert_alpha()
+    self.jungle_button = self.py.transform.scale(self.jungle_button, (2400,1700))
+
     generated_images = True
 def display_account(self, logged_in, user):
     # Display account username text at top of screen always
@@ -244,12 +258,6 @@ def start_screen(self, logged_in, user):
 
     display_account(self, logged_in, user)
 
-    #DEBUG
-    # self.py.draw.rect(self.screen, GREY, self.start_rect)
-    # self.py.draw.rect(self.screen, RED, self.options_rect)
-    # self.py.draw.rect(self.screen, BLUE, self.account_rect)
-    # self.py.draw.rect(self.screen, BLUE, self.exit_rect)
-
 def options_screen(self, logged_in, user):
     global collide_input_max_card, collide_input_new_card, collide_input_rect_bg1, collide_input_rect_bg2, collide_input_rect_bg3, collide_input_rect_music, collide_input_rect_sfx, collide_back, collide_save_options
     self.title_font = self.py.font.SysFont('Arial', 50)
@@ -265,13 +273,17 @@ def options_screen(self, logged_in, user):
     # Text input
     self.input_font = self.py.font.SysFont('Arial', 50)
     self.max_card_text_surface = self.input_font.render(self.max_card_count_text, True, (0,0,0))
-    self.screen.blit(self.max_card_text_surface, (610, 470))
+    self.screen.blit(self.max_card_text_surface, (645, 480))
     self.new_card_text_surface = self.input_font.render(self.new_card_count_text, True, (0,0,0))
-    self.screen.blit(self.new_card_text_surface, (610, 710))
+    self.screen.blit(self.new_card_text_surface, (650, 730))
     self.music_volume_text_surface = self.input_font.render(self.music_volume_text, True, (0,0,0))
-    self.screen.blit(self.music_volume_text_surface, (1095, 577))
+    self.screen.blit(self.music_volume_text_surface, (1110, 577))
     self.sfx_volume_text_surface = self.input_font.render(self.sfx_volume_text, True, (0,0,0))
-    self.screen.blit(self.sfx_volume_text_surface, (1098, 730))
+    self.screen.blit(self.sfx_volume_text_surface, (1110, 730))
+
+    self.screen.blit(self.plains_button, (960, 405))
+    self.screen.blit(self.desert_button, (1090, 405))
+    self.screen.blit(self.jungle_button, (1220, 405))
 
     self.input_rect_max_card = self.py.Rect(610, 470, 120, 100) 
     collide_input_max_card = self.input_rect_max_card.collidepoint(self.pos) 
@@ -304,16 +316,6 @@ def options_screen(self, logged_in, user):
         self.py.draw.rect(self.screen, GREY, self.input_rect_sfx, 4)
 
     display_account(self, logged_in, user)
-    # DEBUG
-    # self.py.draw.rect(self.screen, RED, self.back_rect)
-    # self.py.draw.rect(self.screen, RED, self.save_options_rect)
-    # self.py.draw.rect(self.screen, BLUE, self.input_rect_max_card)
-    # self.py.draw.rect(self.screen, GREY, self.input_rect_new_card)
-    # self.py.draw.rect(self.screen, RED, self.input_rect_bg1)
-    # self.py.draw.rect(self.screen, BLUE, self.input_rect_bg2)
-    # self.py.draw.rect(self.screen, GREY, self.input_rect_bg3)
-    # self.py.draw.rect(self.screen, GREY, self.input_rect_music)
-    # self.py.draw.rect(self.screen, BLUE, self.input_rect_sfx)
 def account_choice_screen(self, logged_in, user):
     global collide_login, collide_signin, collide_back
     self.screen.fill(WHITE)
@@ -328,11 +330,6 @@ def account_choice_screen(self, logged_in, user):
     collide_back = self.back_rect.collidepoint(self.pos)
 
     display_account(self, logged_in, user)
-
-    # DEBUG
-    # self.py.draw.rect(self.screen, RED, self.back_rect)
-    # self.py.draw.rect(self.screen, RED, self.login_rect)
-    # self.py.draw.rect(self.screen, RED, self.signin_rect)
 def account_login_screen(self, logged_in, user):
     global collide_save_login, collide_back, collide_name_input,collide_password_input
     self.screen.fill(WHITE)
@@ -402,34 +399,30 @@ def account_signin_screen(self, logged_in, user):
     # self.py.draw.rect(self.screen, RED, self.name_input_rect)
 def win_screen(self):
     global collide_back_end
-    self.screen.fill(WHITE)
-    self.title_text = self.title_font.render('Win!', True, (0, 0, 0))
-    self.screen.blit(self.title_text, (750,400))
-    self.score_text = self.title_font.render('Score: '+ str(self.current_score), True, (0, 0, 0))
-    self.screen.blit(self.score_text, (750,500))
-    self.back_end_rect = self.py.Rect(550, 530, 200, 100) 
+    self.score_font = self.py.font.SysFont('Arial', 110)
+    self.screen.blit(self.win_bg, (0,0))
+    self.score_text = self.score_font.render(str(self.current_score), True, (0, 0, 0))
+    self.screen.blit(self.score_text, (755,690))
+    self.back_end_rect = self.py.Rect(800,925, 270, 120) 
     collide_back_end = self.back_end_rect.collidepoint(self.pos)
-    self.py.draw.rect(self.screen, RED, self.back_end_rect)
 def draw_screen(self):
     global collide_back_end
+    self.score_font = self.py.font.SysFont('Arial', 110)
     self.screen.fill(WHITE)
-    self.title_text = self.title_font.render('Draw...', True, (0, 0, 0))
+    self.title_text = self.score_font.render('Draw...', True, (0, 0, 0))
     self.screen.blit(self.title_text, (750,400))
-    self.score_text = self.title_font.render('Score: '+ str(self.current_score), True, (0, 0, 0))
-    self.screen.blit(self.score_text, (750,500))
-    self.back_end_rect = self.py.Rect(550, 530, 200, 100) 
+    self.score_text = self.score_font.render(str(self.current_score), True, (0, 0, 0))
+    self.screen.blit(self.score_text, (755,690))
+    self.back_end_rect = self.py.Rect(800,925, 270, 120) 
     collide_back_end = self.back_end_rect.collidepoint(self.pos)
-    self.py.draw.rect(self.screen, RED, self.back_end_rect)
 def loss_screen(self):
     global collide_back_end
-    self.screen.fill(WHITE)
-    self.title_text = self.title_font.render('Loss!', True, (0, 0, 0))
-    self.screen.blit(self.title_text, (750,400))
-    self.score_text = self.title_font.render('Score: '+ str(self.current_score), True, (0, 0, 0))
-    self.screen.blit(self.score_text, (750,500))
-    self.back_end_rect = self.py.Rect(550, 530, 200, 100) 
+    self.score_font = self.py.font.SysFont('Arial', 110)
+    self.screen.blit(self.lose_bg, (0,0))
+    self.score_text = self.score_font.render(str(self.current_score), True, (0, 0, 0))
+    self.screen.blit(self.score_text, (755,690))
+    self.back_end_rect = self.py.Rect(800,925, 270, 120) 
     collide_back_end = self.back_end_rect.collidepoint(self.pos)
-    self.py.draw.rect(self.screen, RED, self.back_end_rect)
 def back(self):
     global collide_back, collide_login, collide_signin
     collide_back = False
@@ -476,7 +469,10 @@ def screen_management(self):
         # End turn button
         self.title_font = self.py.font.SysFont('Arial', 40)
         self.score_text = self.title_font.render('Score: '+ str(self.current_score), True, (255, 255, 255))
+        self.cur_turn_text = self.title_font.render('Turn: '+ str(self.turn), True, (255, 255, 255))
         self.screen.blit(self.score_text, (20,20))
+        self.screen.blit(self.cur_turn_text, (20,90))
+        self.screen.blit(self.help, (20,420))
         
         self.screen.blit(self.end_turn_button, (25,850))
         self.end_turn_button_rect = self.py.Rect(150, 800, 200, 150) # end turn collsion rect
@@ -502,6 +498,19 @@ def handle_selection(self):
             # Switch to play screen
             self.start_screen_active = False
             self.play_screen_active = True
+        # Open account menu
+        if collide_account:
+            self.click_sound.play()
+            self.options_open = False
+            self.account_choice_open = True
+            self.account_choice_open = True
+            self.start_screen_active = False
+        # Exit self
+        if collide_exit:
+            self.click_sound.play()
+            self.py.time.delay(100) # delay exiting so that sound plays
+            self.py.quit()
+            sys.exit()
         if collide_sort_highest:
             self.click_sound.play()
             self.sort_by_high = True
@@ -513,81 +522,77 @@ def handle_selection(self):
             self.click_sound.play()
             self.account_choice_open = False
             self.options_open = True
+            self.start_screen_active = False
             # Return back to previous screen
-        if self.options_open:
-            if collide_back:
-                self.switch_sound.play()
+    if self.options_open:
+        if collide_back:
+            self.switch_sound.play()
 
-                self.account_choice_open = False
-                self.options_open = False
-                self.start_screen_active = True
-
-                back(self)
-            if collide_save_options:
-                self.new_round_sound.play()
-                file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.bg_choice, self.music_volume_text, self.sfx_volume_text)
-                collide_save_options = False
-                if self.user_name_text != "":
-                    self.options_changed = True
-                self.py.mixer.music.set_volume(float(self.music_volume_text)/100)
-                for sound_effect in self.sfx_list:
-                    sound_effect.set_volume(float(self.sfx_volume_text)/100)
-                # SAVED text show
-                self.saved_font = self.py.font.SysFont('Arial', 50, True, True)
-                self.saved_surface = self.saved_font.render("SAVED", True, (150,255,150), GREY)
-                self.screen.blit(self.saved_surface, (600, 840))
-                self.py.display.update()
-                self.py.time.delay(500)
-            if collide_input_max_card:
-                self.toggle_sound.play()
-                self.typing_name = False
-                self.typing_password = False
-                self.typing_new_card_count = False
-                self.typing_music_volume = False
-                self.typing_sfx_volume = False
-                self.typing_max_card_count = True
-                
-            if collide_input_new_card:
-                self.toggle_sound.play()
-                self.typing_name = False
-                self.typing_password = False
-                self.typing_max_card_count = False
-                self.typing_music_volume = False
-                self.typing_sfx_volume = False
-                self.typing_new_card_count = True
-            if collide_input_rect_music:
-                self.toggle_sound.play()
-                self.typing_name = False
-                self.typing_password = False
-                self.typing_max_card_count = False
-                self.typing_new_card_count = False
-                self.typing_sfx_volume = False
-                self.typing_music_volume = True
-            if collide_input_rect_sfx:
-                self.toggle_sound.play()
-                self.typing_name = False
-                self.typing_password = False
-                self.typing_max_card_count = False
-                self.typing_new_card_count = False
-                self.typing_music_volume = False
-                self.typing_sfx_volume = True
-            if collide_input_rect_bg1:
-                self.toggle_sound.play()
-                self.bg_choice = 'plains'
-            if collide_input_rect_bg2:
-                self.toggle_sound.play()
-                self.bg_choice = 'desert'
-            if collide_input_rect_bg3:
-                self.toggle_sound.play()
-                self.bg_choice = 'jungle'
-        # Open account menu
-        if collide_account:
-            self.click_sound.play()
+            self.account_choice_open = False
             self.options_open = False
-            self.account_choice_open = True
-            self.account_choice_open = True
-            # Return back to previous screen
-        if collide_back and self.account_choice_open:
+            self.start_screen_active = True
+
+            back(self)
+        if collide_save_options:
+            self.new_round_sound.play()
+            file_manager.File_Manager.change_options(self, self.user_name_text, self.user_password_text, self.max_card_count_text, self.new_card_count_text, self.bg_choice, self.music_volume_text, self.sfx_volume_text)
+            collide_save_options = False
+            if self.user_name_text != "":
+                self.options_changed = True
+            self.py.mixer.music.set_volume(float(self.music_volume_text)/100)
+            for sound_effect in self.sfx_list:
+                sound_effect.set_volume(float(self.sfx_volume_text)/100)
+            # SAVED text show
+            self.saved_font = self.py.font.SysFont('Arial', 50, True, True)
+            self.saved_surface = self.saved_font.render("SAVED", True, (150,255,150), GREY)
+            self.screen.blit(self.saved_surface, (600, 840))
+            self.py.display.update()
+            self.py.time.delay(500)
+        if collide_input_max_card:
+            self.toggle_sound.play()
+            self.typing_name = False
+            self.typing_password = False
+            self.typing_new_card_count = False
+            self.typing_music_volume = False
+            self.typing_sfx_volume = False
+            self.typing_max_card_count = True
+            
+        if collide_input_new_card:
+            self.toggle_sound.play()
+            self.typing_name = False
+            self.typing_password = False
+            self.typing_max_card_count = False
+            self.typing_music_volume = False
+            self.typing_sfx_volume = False
+            self.typing_new_card_count = True
+        if collide_input_rect_music:
+            self.toggle_sound.play()
+            self.typing_name = False
+            self.typing_password = False
+            self.typing_max_card_count = False
+            self.typing_new_card_count = False
+            self.typing_sfx_volume = False
+            self.typing_music_volume = True
+        if collide_input_rect_sfx:
+            self.toggle_sound.play()
+            self.typing_name = False
+            self.typing_password = False
+            self.typing_max_card_count = False
+            self.typing_new_card_count = False
+            self.typing_music_volume = False
+            self.typing_sfx_volume = True
+        if collide_input_rect_bg1:
+            self.toggle_sound.play()
+            self.bg_choice = 'plains'
+        if collide_input_rect_bg2:
+            self.toggle_sound.play()
+            self.bg_choice = 'desert'
+        if collide_input_rect_bg3:
+            self.toggle_sound.play()
+            self.bg_choice = 'jungle'
+        
+    if self.account_choice_open:
+        if collide_back:
             self.switch_sound.play()
             self.options_open = False
             self.account_choice_open = False
@@ -601,104 +606,100 @@ def handle_selection(self):
             collide_account = False
             self.account_signin_open = True
             self.account_login_open = False
+            self.start_screen_active = False
             account_signin_screen(self, self.logged_in, self.user)
-        if self.account_signin_open:
-            if collide_name_input:
-                self.toggle_sound.play()
-                self.typing_password = False
-                self.typing_max_card_count = False
-                self.typing_new_card_count = False
-                self.typing_music_volume = False
-                self.typing_sfx_volume = False
-                self.typing_name = True
-            if collide_password_input:
-                self.toggle_sound.play()
-                self.typing_name = False
-                self.typing_max_card_count = False
-                self.typing_new_card_count = False
-                self.typing_music_volume = False
-                self.typing_sfx_volume = False
-                self.typing_password = True
-            # Return back to previous screen
-            if collide_back:
-                self.switch_sound.play()
-                self.start_screen_active = True
-                self.account_signin_open = False
-                back(self)
-            # Pressing save button
-            if collide_save_account:
-                self.new_round_sound.play()
-                result = file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
-                if result == "ACCOUNT ADDED":
-                    self.saved_font = self.py.font.SysFont('Arial', 40, True, True)
-                    self.saved_surface = self.saved_font.render("ADDED ACCOUNT", True, (150,255,150), GREY)
-                    self.screen.blit(self.saved_surface, (660, 830))
-                    self.py.display.update()
-                    self.py.time.delay(500)
-                    self.logged_in = True
-                    self.user = self.user_name_text
-                elif result == "ACCOUNT ALREADY EXISTS":
-                    self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
-                    self.saved_surface = self.saved_font.render("ACCOUNT ALREADY EXISTS", True, (150,255,150), GREY)
-                    self.screen.blit(self.saved_surface, (660, 840))
-                    self.py.display.update()
-                    self.py.time.delay(500)
-                elif result == "EMPTY TEXT":
-                    self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
-                    self.saved_surface = self.saved_font.render("EMPTY", True, (150,255,150), GREY)
-                    self.screen.blit(self.saved_surface, (660, 840))
-                    self.py.display.update()
-                    self.py.time.delay(500)
         # Log in
         if collide_login:
             self.click_sound.play()
             self.account_choice_open = False
             collide_account = False
-            self.account_login_open = True
             self.account_signin_open = False
-            account_login_screen(self, self.logged_in, self.user)
-            # Return back to previous screen
-        if self.account_login_open:
-            if collide_back:
-                self.switch_sound.play()
-                self.start_screen_active = True
-                self.account_login_open = False
-                back(self)
-            # Pressing name input text box
-            elif collide_name_input:
-                self.toggle_sound.play()
-                self.typing_name = True
-                self.typing_password = False
-            # Pressing password input text box
-            elif collide_password_input:
-                self.toggle_sound.play()
-                self.typing_password = True
-                self.typing_name = False
-            # Pressing login button
-            elif collide_save_login:
-                self.new_round_sound.play()
-                result = file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
-                if result == "LOGGED IN":
-                    self.saved_font = self.py.font.SysFont('Arial', 40, True, True)
-                    self.saved_surface = self.saved_font.render("LOGGED IN", True, (150,255,150), GREY)
-                    self.screen.blit(self.saved_surface, (660, 830))
-                    self.py.display.update()
-                    self.py.time.delay(500)
-                    self.logged_in = True
-                    self.user = self.user_name_text
-                elif result == "NO ACCOUNT FOUND":
-                    self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
-                    self.saved_surface = self.saved_font.render("NO ACCOUNT FOUND", True, (150,255,150), GREY)
-                    self.screen.blit(self.saved_surface, (660, 830))
-                    self.py.display.update()
-                    self.py.time.delay(500)
+            self.account_login_open = True
+            self.start_screen_active = False
+            account_signin_screen(self, self.logged_in, self.user)
+    if self.account_signin_open:
+        if collide_name_input:
+            self.toggle_sound.play()
+            self.typing_password = False
+            self.typing_max_card_count = False
+            self.typing_new_card_count = False
+            self.typing_music_volume = False
+            self.typing_sfx_volume = False
+            self.typing_name = True
+        if collide_password_input:
+            self.toggle_sound.play()
+            self.typing_name = False
+            self.typing_max_card_count = False
+            self.typing_new_card_count = False
+            self.typing_music_volume = False
+            self.typing_sfx_volume = False
+            self.typing_password = True
+        # Return back to previous screen
+        if collide_back:
+            self.switch_sound.play()
+            self.start_screen_active = True
+            self.account_signin_open = False
+            back(self)
+        # Pressing save button
+        if collide_save_account:
+            self.new_round_sound.play()
+            result = file_manager.File_Manager.add_account(self, self.user_name_text, self.user_password_text)
+            if result == "ACCOUNT ADDED":
+                self.saved_font = self.py.font.SysFont('Arial', 40, True, True)
+                self.saved_surface = self.saved_font.render("ADDED ACCOUNT", True, (150,255,150), GREY)
+                self.screen.blit(self.saved_surface, (660, 830))
+                self.py.display.update()
+                self.py.time.delay(500)
+                self.logged_in = True
+                self.user = self.user_name_text
+            elif result == "ACCOUNT ALREADY EXISTS":
+                self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
+                self.saved_surface = self.saved_font.render("ACCOUNT ALREADY EXISTS", True, (150,255,150), GREY)
+                self.screen.blit(self.saved_surface, (660, 840))
+                self.py.display.update()
+                self.py.time.delay(500)
+            elif result == "EMPTY TEXT":
+                self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
+                self.saved_surface = self.saved_font.render("EMPTY", True, (150,255,150), GREY)
+                self.screen.blit(self.saved_surface, (660, 840))
+                self.py.display.update()
+                self.py.time.delay(500)
+    if self.account_login_open:
+        if collide_back:
+            self.switch_sound.play()
+            self.start_screen_active = True
+            self.account_login_open = False
+            back(self)
+        # Pressing name input text box
+        elif collide_name_input:
+            self.toggle_sound.play()
+            self.typing_name = True
+            self.typing_password = False
+        # Pressing password input text box
+        elif collide_password_input:
+            self.toggle_sound.play()
+            self.typing_password = True
+            self.typing_name = False
+        # Pressing login button
+        elif collide_save_login:
+            self.new_round_sound.play()
+            result = file_manager.File_Manager.login(self, self.user_name_text, self.user_password_text)
+            if result == "LOGGED IN":
+                self.saved_font = self.py.font.SysFont('Arial', 40, True, True)
+                self.saved_surface = self.saved_font.render("LOGGED IN", True, (150,255,150), GREY)
+                self.screen.blit(self.saved_surface, (660, 830))
+                self.py.display.update()
+                self.py.time.delay(500)
+                self.logged_in = True
+                self.user = self.user_name_text
+            elif result == "NO ACCOUNT FOUND":
+                self.saved_font = self.py.font.SysFont('Arial', 30, True, True)
+                self.saved_surface = self.saved_font.render("NO ACCOUNT FOUND", True, (150,255,150), GREY)
+                self.screen.blit(self.saved_surface, (660, 830))
+                self.py.display.update()
+                self.py.time.delay(500)
                 
-        # Exit self
-        if collide_exit:
-            self.click_sound.play()
-            self.py.time.delay(100) # delay exiting so that sound plays
-            self.py.quit()
-            sys.exit()
+        
 
     # Cards have already been generated and collisiosn have been checked earlier
     if self.generated_cards and self.collisions_checked:
