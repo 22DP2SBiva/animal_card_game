@@ -24,11 +24,8 @@ def handle_input(self):
                 for pc_card in self.pc_cards:
                     if pc_card not in self.pc_attacked:  # Check if PC card has already attacked
                         tier_difference = pc_card[1] - player_card[1]
-                        print("PC tier:", pc_card[1])
-                        print("PLAYER tier:", player_card[1])
                         if tier_difference >= 0:  # Attack only lower tier or same tier cards
                             points = 3
-                            print("Tier yes")
                         else:
                             points = 0  # Skip attacking higher tier cards
                         # If this player card isnt already going to be attacked, then set to be attacked by this pc card
@@ -40,21 +37,15 @@ def handle_input(self):
             # Randomly select a card to attack
             random.shuffle(xtra_points)
             i = 0
-            print()
-            print("len xtra", len(xtra_points))
-            print()
             while i < len(xtra_points):
                 if xtra_points[i][0] > 0 and self.selected_card is None:  # If points > 0, it means this card should attack now
                     self.selected_card = xtra_points[i][2] # set to player card
                     self.pc_attacked.append(xtra_points[i][1])  # Update list of attacked PC cards
-                    print("Should attack now", i)
                     current_pc_index = self.pc_cards.index(xtra_points[i][1])
                 elif xtra_points[i][0] > 0 and self.selected_card is not None: # This card should attack but not this turn
-                    print("Should attack but not this turn", i)
                     self.should_attack_cards.append(xtra_points[i][1])
                 elif xtra_points[i][0] == 0: # This card shouldnt attack at all
                     self.shouldnt_attack_cards.append(xtra_points[i][1])
-                    print("ShouldNT attack at all", i)
                 i += 1
             # If no card that should attack left, then end turn early
             if len(self.should_attack_cards) == 0 and self.selected_card is None:
@@ -69,8 +60,6 @@ def handle_input(self):
                     self.py.event.post(self.battle_event)
                     new_event = self.battle_event
                     # Set the newly posted event as the cards' controlling event
-                    print("Attacking with", self.pc_cards[i][0])
-                    print("Attack ", self.selected_card[0])
                     self.pc_cards[current_pc_index][11] = new_event
                     self.selected_card[11] = new_event # set player selected card to activate upon battle event
                     self.pc_cards[current_pc_index][15] = True # This card has attacked, so True
@@ -95,12 +84,10 @@ def handle_input(self):
             elif self.selected_card is None and self.pc_battled_all_cards_count == 0 and premature_end_turn is False:
                 self.py.time.delay(500)
                 # Sort cards
-                print("Sorts cards")
                 utilities.sort_cards(self)
     # Delay first time PC is battling animation for readability
     if self.called_battle == 1:
         self.called_battle += 1
-        print("Delay in called battle")
         self.py.time.delay(2000)
     # PLAYER
     elif self.turn == "PLAYER":
@@ -112,7 +99,6 @@ def handle_input(self):
                     # Selecting card when it is hovered over
                     if cardd[6] is True and cardd[12] == self.run_count and self.card_selected is False and cardd[15] is False:
                         if self.pressing:
-                            print("Selected 1")
                             cardd[12] = 0
                             cardd[13] = True
                             # Set that a card is currently selected and which card is currently selected
@@ -124,7 +110,6 @@ def handle_input(self):
                     # Move selected card when it is NOT hovered over
                     elif cardd[6] is True and cardd[12] != self.run_count and self.card_selected is True and cardd[15] is False:
                         if cardd[5] == self.card_selected_rect:   
-                            print("Selected 1.2")
                             cardd[12] = 0
                             cardd[13] = True
                             # Set that a card is currently selected and which card is currently selected
@@ -138,7 +123,6 @@ def handle_input(self):
                         # Is the mouse being held down?
                         # we are checking if the mouse left click is being pressed and if the currently selected card is not the same as the card being hovered over
                         if self.pressing and self.card_selected is False:
-                            print("Selected 2")
                             cardd[12] = 0
                             cardd[13] = True
                             # Set that a card is currently selected and which card is currently selected
@@ -147,7 +131,6 @@ def handle_input(self):
                             self.py.event.post(self.select_event)
                             cardd[11] = self.select_event
                         elif self.pressing is False and self.card_selected is False:
-                            print("Hover")
                             self.run_count = HOVER_RUN_COUNT
                             self.py.event.post(self.hover_event)
                             cardd[11] = self.hover_event
@@ -155,14 +138,12 @@ def handle_input(self):
                     
                     elif cardd[6] is False and cardd[12] < self.run_count and self.card_selected is False and cardd[13] is False and self.colliding_pc is False and cardd[15] is False:
                         if self.move_back_disabled is False:
-                            print("Move back to starting position")
                             # [11] is the current event, we are assigning the new event to it
                             self.py.event.post(self.move_to_starting_pos_event)
                             cardd[11] = self.move_to_starting_pos_event
                     # If cursor not collidng with anything but a card has already been selected (and this card is the selcted card)
                     elif cardd[6] is False and cardd[12] < self.run_count and cardd[5] == self.card_selected_rect:
                         if self.battling is False: # If not battling any cards currently
-                            print("Selected 3")
                             cardd[12] = 0
                             cardd[13] = True
                             # Set that a card is currently selected and which card is currently selected
@@ -173,7 +154,6 @@ def handle_input(self):
                             cardd[11] = self.select_event
                 if cardd[15] is True:
                     self.player_battled_all_cards_count += 1
-                    print("is true: ", self.player_battled_all_cards_count)
                 else:
                     self.player_battled_all_cards_count = 0
     # All these checks and posts have to be made because events have to be posted every frame, otherwise they don't trigger
@@ -190,16 +170,12 @@ def finish_combining_cards(self, Card):
     cardd = Card
     cardd[12] = 0
     cardd[16] = True
-    print("Delay in battling")
     self.py.time.delay(500) 
-    print("before", self.objects_to_display)
     # Replace first card with higher tier card and remove second to achieve a visual 'combining' appearance
     higher_tier_card = card.generate_higher_tier_card(self.first_card_to_combine[1])
     index = self.player_cards.index(self.first_card_to_combine) # index of fisrt card to combine in player cards list
     obj_to_redefine = self.objects_to_display.index([self.player_cards[index][3], [self.player_cards[index][5].x, self.player_cards[index][5].y], False])
     # Redefine this player cards' values as the higher tiers' ones'
-    print(self.player_cards[index][0])
-    print(higher_tier_card[0])
     self.player_cards[index][0] = higher_tier_card[0]
     self.player_cards[index][1] = higher_tier_card[1]
     self.player_cards[index][2] = higher_tier_card[2]
@@ -212,8 +188,6 @@ def finish_combining_cards(self, Card):
     self.player_cards[index][16] = True
 
     # Redefine card in object list with new values
-    print("obj to r", obj_to_redefine)
-    print("in list obj to r", self.objects_to_display[obj_to_redefine])
     self.objects_to_display[obj_to_redefine] = [self.player_cards[index][3], [self.player_cards[index][5].x, self.player_cards[index][5].y], False]
     # Delete second card since we need it to appear that the two cards merge together
     self.player_cards.remove(self.second_card_to_combine)
@@ -221,7 +195,6 @@ def finish_combining_cards(self, Card):
     # Search in list for base card and remove it
     base_card = utilities.blind_find(self, self.objects_to_display, [self.second_card_to_combine[5].x, self.second_card_to_combine[5].y])
     self.objects_to_display.remove(base_card)
-    print("after", self.objects_to_display)
     self.py.time.delay(500)
     # TODO! DO ANIMATION
     self.combine_sound.play()
@@ -244,7 +217,6 @@ def handle_card_selection(self):
         if self.p_colliding_with_card[i] is True and self.player_cards[i][15] == False:
             # No card selected yet, Select card and place on board
             if self.card_selected is False:
-                print("Card selected is False")
                 self.card_place_sound.play()
                 self.card_selected = True
                 self.card_selected_rect = self.player_cards[i][5]
@@ -253,9 +225,7 @@ def handle_card_selection(self):
                 self.py.event.post(self.select_event)
             # Card already selected, 'No.' animation plays
             else:
-                print("Card selected is True")
                 if self.card_selected_rect == self.card_to_collide and self.player_cards[i][15] == False:
-                    print("Card selected rect as current rect cursor on")
                     # Cant select same card again
                     self.player_cards[i][11] = self.cant_select_event
                     self.py.event.post(self.cant_select_event)
@@ -263,7 +233,6 @@ def handle_card_selection(self):
 def combine_cards(self):
     # Select first card
     if self.first_card_to_combine is None:
-        print("First card selected")
         self.combining = True
 
         self.card_selected = True
@@ -276,9 +245,6 @@ def combine_cards(self):
         self.first_card_to_combine[11] = self.select_event
     # Selecting same first card (BAD)
     elif self.first_card_to_combine is not None and self.card_to_collide is self.first_card_to_combine:
-        print(self.card_to_collide)
-        print(self.second_card_to_combine)
-        print("Selecting same first card (NO)")
         # Reset valeus and unselect card
         card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
         card_to_change[11] = self.move_to_starting_pos_event
@@ -299,11 +265,9 @@ def combine_cards(self):
     elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 1:
         # Set second card as card under cursor
         self.second_card_to_combine = self.card_to_collide
-        print("Not same card and card only 1")
         # Selecting second card (for combining cards)
         # check if theyre the same type of card (Grasshopper for instance)
         if self.first_card_to_combine[1] == self.second_card_to_combine[1] and self.first_card_to_combine[1] is not 4:
-            print("Combinging!")
             # SELECT BOTH CARDS and COMBINE
             self.selected_card_count += 1 # how many cards have been selected in total
             # Reset selected card since it's about to not exist
@@ -319,7 +283,6 @@ def combine_cards(self):
             self.current_score += 20
             
         else:
-            print("Not same two cards or Eagles both")
             card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
             card_to_change[11] = self.move_to_starting_pos_event
             card_to_change[12] = 0
@@ -339,7 +302,6 @@ def combine_cards(self):
             self.first_card_to_combine = None
             self.selected_card_count = 0
     elif self.card_selected_rect != self.card_to_collide and self.selected_card_count == 2:
-        print("Not same card and card 2")
         card_to_change = self.player_cards[self.player_cards.index(self.first_card_to_combine)]
         card_to_change[11] = self.move_to_starting_pos_event
         card_to_change[12] = 0

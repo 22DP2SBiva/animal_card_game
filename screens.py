@@ -411,8 +411,10 @@ def draw_screen(self):
     self.screen.fill(WHITE)
     self.title_text = self.score_font.render('Draw...', True, (0, 0, 0))
     self.screen.blit(self.title_text, (750,400))
-    self.score_text = self.score_font.render(str(self.current_score), True, (0, 0, 0))
+    self.score_text = self.score_font.render('Score: ' + str(self.current_score), True, (0, 0, 0))
     self.screen.blit(self.score_text, (755,690))
+    self.back_text = self.score_font.render('Back', True, (0, 0, 0))
+    self.screen.blit(self.back_text, (800,925))
     self.back_end_rect = self.py.Rect(800,925, 270, 120) 
     collide_back_end = self.back_end_rect.collidepoint(self.pos)
 def loss_screen(self):
@@ -456,7 +458,7 @@ def screen_management(self):
     # PLAY
     if self.play_screen_active:
         if self.py.mixer.music.get_busy() is False or self.music_playing is not "play1":
-            self.py.mixer.music.load('Sounds/play1.mp3')
+            self.py.mixer.music.load('Sounds/draw.mp3')
             self.py.mixer.music.play(-1)
             self.py.mixer.music.set_volume(float(self.music_volume_text)/100)
             self.music_playing = "play1"
@@ -725,6 +727,11 @@ def reset_game(self):
     self.card_to_collide = False
     self.pc_battled_all_cards_count = 0
     self.player_battled_all_cards_count = 0
+    self.new_positions.clear()
+    self.first_card_to_combine = None
+    self.combined_cards = False
+    self.no_cards_attacked_yet = True
+    self.second_card_to_combine = None
     self.round_count = 1
     self.turn_count = 1
     self.turn = "PLAYER"

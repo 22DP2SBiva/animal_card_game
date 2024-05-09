@@ -186,7 +186,7 @@ class Game:
         self.card_slide_sound = pygame.mixer.Sound('Sounds/cardSlide4.ogg')
         self.combine_sound = pygame.mixer.Sound('Sounds/combine.wav')
         self.turn_sound = pygame.mixer.Sound('Sounds/turn.wav')
-        self.card_destroy_sound = pygame.mixer.Sound('Sounds/card_destroy.wav')
+        self.card_destroy_sound = pygame.mixer.Sound('Sounds/card_destroy.mp3')
         self.sfx_list = [self.click_sound, self.toggle_sound, self.switch_sound, self.cant_select_sound, self.new_round_sound, self.card_fan_sound, self.card_place_sound, self.card_shove_sound, self.card_slide_sound, self.combine_sound, self.turn_sound, self.card_destroy_sound]
 
         self.music_playing = ""
@@ -434,7 +434,7 @@ class Game:
                 # WIN/LOSE
                 if len(self.player_cards) == 0 and len(self.pc_cards) == 0:
                     if pygame.mixer.music.get_busy() is False or self.music_playing is not "draw":
-                        pygame.mixer.music.load('Sounds/draw.mp3')
+                        pygame.mixer.music.load('Sounds/play1.mp3')
                         pygame.mixer.music.play(-1)
                         pygame.mixer.music.set_volume(float(self.music_volume_text)/100)
                         self.music_playing = "draw"
